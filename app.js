@@ -57,9 +57,9 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/', require('./routes/index'));
-app.use('/users', require('./routes/users'));
-app.use('/items', require('./routes/items'));
-app.use('/trades', require('./routes/trades'));
+app.use('/users', require('./routes/userRoutes'));
+app.use('/items', require('./routes/itemRoutes'));
+app.use('/trades', require('./routes/tradeRoutes'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

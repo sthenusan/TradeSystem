@@ -15,6 +15,7 @@ A modern web application for barter trading, allowing users to exchange goods an
 ## Tech Stack
 
 ### Frontend
+
 - HTML5
 - CSS3
 - JavaScript (ES6+)
@@ -22,13 +23,15 @@ A modern web application for barter trading, allowing users to exchange goods an
 - EJS (Embedded JavaScript) templating
 
 ### Backend
+
 - Node.js
 - Express.js
 - MongoDB with Mongoose ODM
-- RESTful API architecture
+- RESTful API
 
 ### Testing
-- Unit Testing: Jest
+
+- Unit Testing: Jest, Mocha, Chai
 - UI Testing: Cypress
 - End-to-End Testing: Cypress
 
@@ -38,6 +41,7 @@ A modern web application for barter trading, allowing users to exchange goods an
 barter-trading-system/
 ├── config/             # Configuration files
 ├── controllers/        # Route controllers
+├── middleware/        # Middleware handlers
 ├── models/            # Database models
 ├── routes/            # API routes
 ├── services/          # Business logic
@@ -56,6 +60,7 @@ barter-trading-system/
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js (v14 or higher)
 - MongoDB
 - npm or yarn
@@ -63,27 +68,118 @@ barter-trading-system/
 ### Installation
 
 1. Clone the repository
+
 ```bash
 git clone [repository-url]
 cd barter-trading-system
 ```
 
 2. Install dependencies
+
 ```bash
 npm install
 ```
 
-3. Set up environment variables
+3. Set up local environment variables (OPTIONAL)
+
 ```bash
 cp .env.example .env
 ```
 
-4. Start the development server
+4. Install MongoDB
+
+- On Windows:
+
+  - Download the MongoDB Community Server from the [official website](https://www.mongodb.com/try/download/community).
+  - Run the installer and follow the setup instructions.
+  - After installation, you can start MongoDB as a Windows service or run it manually from the command prompt:
+    ```bash
+    "C:\Program Files\MongoDB\Server\<version>\bin\mongod.exe"
+    ```
+
+- On MacOS:
+
+  ```bash
+  brew tap mongodb/brew
+  brew install mongodb-community
+  brew services start mongodb-community
+  ```
+
+  This will install and start MongoDB as a background service.
+
+- On Ubuntu:
+
+  ```bash
+  sudo apt update
+  sudo apt install -y gnupg
+  wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
+  echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+  sudo apt update
+  sudo apt install -y mongodb-org
+  sudo systemctl start mongod
+  sudo systemctl enable mongod
+  ```
+
+  This will install and start MongoDB as a service.
+
+- To verify MongoDB is running:
+  ```bash
+  mongo --eval 'db.runCommand({ connectionStatus: 1 })'
+  ```
+  You should see a response with `"ok" : 1`.
+
+### Run & Test
+
+#### 1. Start & Stop MongoDB
+
+- **On Windows**
+
+  - Start MongoDB (as a service):
+    ```bash
+    net start MongoDB
+    ```
+  - Stop MongoDB (as a service):
+    ```bash
+    net stop MongoDB
+    ```
+  - Or run manually (if not installed as a service):
+    ```bash
+    "C:\Program Files\MongoDB\Server\<version>\bin\mongod.exe"
+    ```
+
+- **On macOS** (with Homebrew)
+
+  - Start MongoDB:
+    ```bash
+    brew services start mongodb-community
+    ```
+  - Stop MongoDB:
+    ```bash
+    brew services stop mongodb-community
+    ```
+
+- **On Ubuntu/Linux**
+  - Start MongoDB:
+    ```bash
+    sudo systemctl start mongod
+    ```
+  - Stop MongoDB:
+    ```bash
+    sudo systemctl stop mongod
+    ```
+  - Check status:
+    ```bash
+    sudo systemctl status mongod
+    ```
+
+#### 2. Start the development server
+
 ```bash
 npm run dev
 ```
 
-5. Run tests
+#### 3. Run tests
+
 ```bash
 npm test           # Run unit tests
 npm run test:ui    # Run UI tests
