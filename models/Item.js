@@ -28,7 +28,8 @@ const itemSchema = new mongoose.Schema({
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        // TODO: Add required
+        // required: true
     },
     status: {
         type: String,
@@ -37,13 +38,9 @@ const itemSchema = new mongoose.Schema({
     },
     location: {
         type: String,
-        required: true,
-        trim: true
+        trim: true,
+        required: true
     },
-    tags: [{
-        type: String,
-        trim: true
-    }],
     createdAt: {
         type: Date,
         default: Date.now
@@ -61,6 +58,6 @@ itemSchema.pre('save', function (next) {
 });
 
 // Create text index for search functionality
-itemSchema.index({ title: 'text', description: 'text', tags: 'text' });
+itemSchema.index({ title: 'text', description: 'text' });
 
 module.exports = mongoose.model('Item', itemSchema); 

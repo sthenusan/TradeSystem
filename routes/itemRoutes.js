@@ -40,7 +40,8 @@ function checkFileType(file, cb) {
 router.get('/', itemController.getItems);
 
 // Create item
-router.post('/', ensureAuthenticated, upload.array('images', 5), itemController.createItem);
+// TODO: Add authentication
+router.post('/', upload.array('images', 5), itemController.createItem);
 
 // Create item form
 router.get('/create', (req, res) => {

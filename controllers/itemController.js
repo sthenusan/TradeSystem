@@ -33,23 +33,57 @@ exports.getItem = async (req, res) => {
 // Create new item
 exports.createItem = async (req, res) => {
     try {
-        const { title, description, category, condition, location, tags } = req.body;
-        const images = req.files.map(file => file.filename);
-        const owner = req.user.id;
+        const { title, description, category, condition, location } = req.body;
+        const images = Array.isArray(req.files) ? req.files.map(file => file.filename) : [];
+
+        // TODO: Add owner
+        // const owner = req.user.id;
+        // Create a valid ObjectId for testing (24 characters)
+        const owner = "65f1a1234567890123456789";
+
+        // Validate required fields
+        if (!title || !description || !category || !condition || !location) {
+            if (req.xhr || req.headers.accept?.includes('application/json')) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Please provide all required fields'
+                });
+            }
+            req.flash('error_msg', 'Please provide all required fields');
+            return res.redirect('/items/create');
+        }
+
         const newItem = await itemService.createItemService({
             title,
             description,
             category,
             condition,
             location,
-            tags,
             images,
             owner
         });
+
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+            return res.status(201).json({
+                success: true,
+                message: 'Item created successfully',
+                data: newItem
+            });
+        }
+
         req.flash('success_msg', 'Item created successfully');
-        res.redirect(`/items/${newItem._id}`);
+        // TODO: Redirect to the manage items page
+        // res.redirect(`/items/${newItem._id}`);
+        res.redirect('/');
     } catch (err) {
         console.error(err);
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+            return res.status(500).json({
+                success: false,
+                message: 'Server Error',
+                error: err.message
+            });
+        }
         res.status(500).render('error', { message: 'Server Error' });
     }
 };
@@ -57,12 +91,12 @@ exports.createItem = async (req, res) => {
 // Update item
 exports.updateItem = async (req, res) => {
     try {
-        const { title, description, category, condition, location, tags } = req.body;
-        const images = req.files && req.files.length > 0 ? req.files.map(file => file.filename) : undefined;
+        const { title, description, category, condition, location } = req.body;
+        const images = Array.isArray(req.files) && req.files.length > 0 ? req.files.map(file => file.filename) : undefined;
         const item = await itemService.updateItemService(
             req.params.id,
             req.user.id,
-            { title, description, category, condition, location, tags, images }
+            { title, description, category, condition, location, images }
         );
         if (!item) {
             return res.status(404).render('error', { message: 'Item not found' });

@@ -30,14 +30,13 @@ async function getItemService(itemId) {
 }
 
 // Create new item
-async function createItemService({ title, description, category, condition, location, tags, images, owner }) {
+async function createItemService({ title, description, category, condition, location, images, owner }) {
     const newItem = new Item({
         title,
         description,
         category,
         condition,
         location,
-        tags: tags.split(',').map(tag => tag.trim()),
         images,
         owner
     });
@@ -46,14 +45,13 @@ async function createItemService({ title, description, category, condition, loca
 }
 
 // Update item
-async function updateItemService(itemId, ownerId, { title, description, category, condition, location, tags, images }) {
+async function updateItemService(itemId, ownerId, { title, description, category, condition, location, images }) {
     const updateData = {
         title,
         description,
         category,
         condition,
         location,
-        tags: tags.split(',').map(tag => tag.trim())
     };
     if (images && images.length > 0) updateData.images = images;
     const item = await Item.findOneAndUpdate(

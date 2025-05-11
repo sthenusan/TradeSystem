@@ -94,10 +94,10 @@
                             <select class="browser-default" id="category" name="category" required>
                                 <option value="" disabled selected>Select a category</option>
                                 <option value="Electronics">Electronics</option>
-                                <option value="Books">Books</option>
+                                <option value="Furniture">Furniture</option>
                                 <option value="Clothing">Clothing</option>
-                                <option value="Home">Home</option>
-                                <option value="Toys">Toys</option>
+                                <option value="Books">Books</option>
+                                <option value="Sports">Sports</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>
@@ -107,8 +107,9 @@
                                 <option value="" disabled selected>Select condition</option>
                                 <option value="New">New</option>
                                 <option value="Like New">Like New</option>
-                                <option value="Used">Used</option>
-                                <option value="For Parts">For Parts</option>
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
                             </select>
                         </div>
                         <div style="display:flex;justify-content:flex-end;gap:12px;">
@@ -124,10 +125,10 @@
                                 placeholder="Describe your item in detail..." required></textarea>
                         </div>
                         <div style="margin-bottom:20px;">
-                            <label for="lookingFor" style="font-weight:500;">What You're Looking For*</label>
-                            <textarea id="lookingFor" name="lookingFor"
+                            <label for="location" style="font-weight:500;">Location*</label>
+                            <textarea id="location" name="location"
                                 style="width:100%;margin-top:6px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:1rem;min-height:60px;resize:vertical;"
-                                placeholder="What would you like to trade this for?" required></textarea>
+                                placeholder="What is your location?" required></textarea>
                         </div>
                         <div style="display:flex;justify-content:space-between;gap:12px;">
                             <button type="button" id="back-to-step-1" class="btn-flat">Back</button>
@@ -216,8 +217,8 @@
                 const toStep3 = document.getElementById('to-step-3');
                 toStep3.onclick = function () {
                     const desc = document.getElementById('description').value.trim();
-                    const lookingFor = document.getElementById('lookingFor').value.trim();
-                    if (desc && lookingFor) {
+                    const location = document.getElementById('location').value.trim();
+                    if (desc && location) {
                         setStep(2);
                     } else {
                         alert('Please fill in all required fields.');
