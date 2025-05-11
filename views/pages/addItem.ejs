@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Item | Barter Trading System</title>
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        input::placeholder,
+        textarea::placeholder {
+            color: #bdbdbd !important;
+            opacity: 1;
+        }
+
+        input,
+        select.browser-default,
+        textarea {
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select.browser-default:focus,
+        textarea:focus {
+            border-color: #059669 !important;
+            outline: none;
+        }
+
+        select.browser-default {
+            width: 100% !important;
+            margin-top: 6px !important;
+            padding: 12px !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 6px !important;
+            font-size: 1rem !important;
+            background: #fff !important;
+            color: #bdbdbd !important;
+        }
+
+        select.browser-default.selected {
+            color: #222 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <%- include('../partials/navbar') %>
+        <main style="background:#f5f5f5;padding:48px 0;">
+            <div
+                style="max-width:700px;margin:0 auto;padding:32px;background:#fff;border-radius:10px;box-shadow:0 2px 16px 0 rgba(30,41,59,0.06);">
+                <h2 style="font-size:1.6rem;font-weight:700;margin:8px 0;">List Your Item</h2>
+                <p style="color:#4B5563;font-size:1rem;margin-bottom:32px;">
+                    Fill in the details below to list your item for
+                    trade. Be as detailed as possible to increase your chances of finding a great trade match.</p>
+                <form id="addItemForm" enctype="multipart/form-data" method="POST" action="/items">
+                    <!-- Stepper -->
+                    <div style="display:flex;align-items:start;justify-content:center;gap:48px;margin-bottom:32px;">
+                        <% const steps=["Basic Info", "Details" , "Photos" ]; %>
+                            <% steps.forEach((step, idx)=> { %>
+                                <div style="display:flex;flex-direction:column;align-items:center;">
+                                    <div id="step-circle-<%= idx+1 %>"
+                                        style="width:40px;height:40px;border-radius:50%;border:2px solid #059669;display:flex;align-items:center;justify-content:center;color:var(--primary-color);background:#fff;transition:background 0.2s;">
+                                        <span>
+                                            <%= idx+1 %>
+                                        </span>
+                                    </div>
+                                    <div id="step-label-<%= idx+1 %>"
+                                        style="margin-top:8px;color:var(--primary-color);">
+                                        <span style="font-weight:300;font-size:0.9rem;">
+                                            <%= step %>
+                                        </span>
+                                    </div>
+                                </div>
+                                <% if(idx < steps.length-1) { %>
+                                    <div style="width:48px;height:2px;background:#e5e7eb;margin-top:20px;"></div>
+                                    <% } %>
+                                        <% }); %>
+                    </div>
+                    <!-- Step 1: Basic Info -->
+                    <div class="step-panel" id="step-1-panel">
+                        <div style="margin-bottom:20px;">
+                            <label for="title" style="font-weight:500;">Item Title*</label>
+                            <textarea id="title" name="title"
+                                style="width:100%;margin-top:6px;padding:12px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:1rem;resize:none;"
+                                placeholder="What are you offering?" required></textarea>
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <label for="category" style="font-weight:500;">Category*</label>
+                            <select class="browser-default" id="category" name="category" required>
+                                <option value="" disabled selected>Select a category</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Books">Books</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Home">Home</option>
+                                <option value="Toys">Toys</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <label for="condition" style="font-weight:500;">Condition*</label>
+                            <select class="browser-default" id="condition" name="condition" required>
+                                <option value="" disabled selected>Select condition</option>
+                                <option value="New">New</option>
+                                <option value="Like New">Like New</option>
+                                <option value="Used">Used</option>
+                                <option value="For Parts">For Parts</option>
+                            </select>
+                        </div>
+                        <div style="display:flex;justify-content:flex-end;gap:12px;">
+                            <button type="button" id="to-step-2" class="btn" style="margin-top:12px;">Continue</button>
+                        </div>
+                    </div>
+                    <!-- Step 2: Details -->
+                    <div class="step-panel" id="step-2-panel" style="display:none;">
+                        <div style="margin-bottom:20px;">
+                            <label for="description" style="font-weight:500;">Description*</label>
+                            <textarea id="description" name="description"
+                                style="width:100%;margin-top:6px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:1rem;min-height:80px;resize:vertical;"
+                                placeholder="Describe your item in detail..." required></textarea>
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <label for="lookingFor" style="font-weight:500;">What You're Looking For*</label>
+                            <textarea id="lookingFor" name="lookingFor"
+                                style="width:100%;margin-top:6px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:1rem;min-height:60px;resize:vertical;"
+                                placeholder="What would you like to trade this for?" required></textarea>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;gap:12px;">
+                            <button type="button" id="back-to-step-1" class="btn-flat">Back</button>
+                            <button type="button" id="to-step-3" class="btn">Continue</button>
+                        </div>
+                    </div>
+                    <!-- Step 3: Photos -->
+                    <div class="step-panel" id="step-3-panel" style="display:none;">
+                        <div style="margin-bottom:20px;">
+                            <label style="font-weight:500;">Photos* (up to 5)</label>
+                            <div id="photo-drop"
+                                style="margin-top:10px;border:1.5px dashed #d1d5db;border-radius:8px;padding:32px 0;text-align:center;background:#fafafa;cursor:pointer;">
+                                <div style="margin-bottom:10px;">
+                                    <img src="/images/ic-photo.svg" alt="Upload"
+                                        style="width:38px;height:38px;opacity:0.5;" />
+                                </div>
+                                <div>Drag and drop your photos here</div>
+                                <div style="color:var(--gray-color);font-size:0.9rem;margin:8px 0;">or</div>
+                                <label for="images"
+                                    style="color:var(--primary-color);cursor:pointer;font-weight:500;display:inline-block;">
+                                    Browse files
+                                </label>
+                                <input type="file" id="images" name="images" accept="image/*" multiple
+                                    style="display:none;" required />
+                            </div>
+                            <div id="photo-preview" style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;"></div>
+                            <label style="font-size:0.95em; margin-top:8px;">
+                                * First photo will be the main image.
+                            </label>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;gap:12px;">
+                            <button type="button" id="back-to-step-2" class="btn-flat">Back</button>
+                            <button type="submit" id="submit-btn" class="btn">Add New Item</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+        <%- include('../partials/footer') %>
+            <!-- Materialize JS -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+            <!-- Custom JS -->
+            <script src="/js/main.js"></script>
+            <!-- Custom JS -->
+            <script>
+                // Stepper logic
+                const stepPanels = [
+                    document.getElementById('step-1-panel'),
+                    document.getElementById('step-2-panel'),
+                    document.getElementById('step-3-panel')
+                ];
+                const stepCircles = [
+                    document.getElementById('step-circle-1'),
+                    document.getElementById('step-circle-2'),
+                    document.getElementById('step-circle-3')
+                ];
+                const stepLabels = [
+                    document.getElementById('step-label-1'),
+                    document.getElementById('step-label-2'),
+                    document.getElementById('step-label-3')
+                ];
+
+                function setStep(step) {
+                    stepPanels.forEach((panel, idx) => {
+                        panel.style.display = (idx === step) ? '' : 'none';
+                        stepCircles[idx].style.background = (idx <= step) ? '#059669' : '#fff';
+                        stepCircles[idx].style.color = (idx <= step) ? '#fff' : '#059669';
+                        stepLabels[idx].style.color = (idx === step) ? '#059669' : '#888';
+                        stepLabels[idx].style.fontWeight = (idx === step) ? '600' : '500';
+                    });
+                }
+
+                // Step 1 -> Step 2
+                const toStep2 = document.getElementById('to-step-2');
+                toStep2.onclick = function () {
+                    const title = document.getElementById('title').value.trim();
+                    const category = document.getElementById('category').value;
+                    const condition = document.getElementById('condition').value;
+                    if (title && category && condition) {
+                        setStep(1);
+                    } else {
+                        alert('Please fill in all required fields.');
+                    }
+                };
+                // Step 2 -> Step 3
+                const toStep3 = document.getElementById('to-step-3');
+                toStep3.onclick = function () {
+                    const desc = document.getElementById('description').value.trim();
+                    const lookingFor = document.getElementById('lookingFor').value.trim();
+                    if (desc && lookingFor) {
+                        setStep(2);
+                    } else {
+                        alert('Please fill in all required fields.');
+                    }
+                };
+                // Back buttons
+                const backToStep1 = document.getElementById('back-to-step-1');
+                if (backToStep1) backToStep1.onclick = () => setStep(0);
+                const backToStep2 = document.getElementById('back-to-step-2');
+                if (backToStep2) backToStep2.onclick = () => setStep(1);
+                // Stepper initial state
+                setStep(0);
+                // Photo upload preview
+                const imagesInput = document.getElementById('images');
+                const photoPreview = document.getElementById('photo-preview');
+                const photoDrop = document.getElementById('photo-drop');
+                let filesArr = [];
+                photoDrop.addEventListener('click', () => imagesInput.click());
+                photoDrop.addEventListener('dragover', e => { e.preventDefault(); photoDrop.style.background = '#f0fdf4'; });
+                photoDrop.addEventListener('dragleave', e => { e.preventDefault(); photoDrop.style.background = '#fafafa'; });
+                photoDrop.addEventListener('drop', e => {
+                    e.preventDefault();
+                    photoDrop.style.background = '#fafafa';
+                    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                    addFiles(files);
+                });
+                imagesInput.addEventListener('change', e => {
+                    addFiles(Array.from(e.target.files));
+                });
+                function addFiles(files) {
+                    files.forEach(file => {
+                        if (filesArr.length < 5 && file.type.startsWith('image/')) {
+                            filesArr.push(file);
+                        }
+                    });
+                    renderPreviews();
+                }
+                function renderPreviews() {
+                    photoPreview.innerHTML = '';
+                    filesArr.forEach((file, idx) => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const div = document.createElement('div');
+                            div.style.position = 'relative';
+                            div.style.display = 'inline-block';
+                            div.style.width = '64px';
+                            div.style.height = '64px';
+                            div.style.border = '1px solid #e5e7eb';
+                            div.style.borderRadius = '8px';
+                            div.style.overflow = 'hidden';
+                            div.style.marginRight = '8px';
+                            div.style.marginBottom = '8px';
+                            div.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
+                            // Remove button
+                            const removeBtn = document.createElement('button');
+                            removeBtn.innerHTML = '×';
+                            removeBtn.type = 'button';
+                            removeBtn.style.position = 'absolute';
+                            removeBtn.style.top = '2px';
+                            removeBtn.style.right = '2px';
+                            removeBtn.style.background = '#fff';
+                            removeBtn.style.border = 'none';
+                            removeBtn.style.borderRadius = '50%';
+                            removeBtn.style.width = '20px';
+                            removeBtn.style.height = '20px';
+                            removeBtn.style.cursor = 'pointer';
+                            removeBtn.onclick = () => {
+                                filesArr.splice(idx, 1);
+                                renderPreviews();
+                            };
+                            div.appendChild(removeBtn);
+                            photoPreview.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+                // Prevent form submit if no images
+                const addItemForm = document.getElementById('addItemForm');
+                addItemForm.onsubmit = function (e) {
+                    if (filesArr.length === 0) {
+                        alert('Please add at least one photo.');
+                        e.preventDefault();
+                        return false;
+                    }
+                    // Attach files to formData (if using AJAX, not needed for normal POST)
+                };
+                // Add this after your other scripts
+                document.querySelectorAll('select.browser-default').forEach(function (select) {
+                    function updateColor() {
+                        if (select.value === "") {
+                            select.classList.remove('selected');
+                        } else {
+                            select.classList.add('selected');
+                        }
+                    }
+                    select.addEventListener('change', updateColor);
+                    updateColor(); // set initial color
+                });
+            </script>
+</body>
+
+</html>
