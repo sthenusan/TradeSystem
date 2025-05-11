@@ -39,18 +39,18 @@ function checkFileType(file, cb) {
 // Get all items
 router.get('/', itemController.getItems);
 
-// Get single item
-router.get('/:id', itemController.getItem);
+// Create item
+router.post('/', ensureAuthenticated, upload.array('images', 5), itemController.createItem);
 
 // Create item form
-router.get('/create', ensureAuthenticated, (req, res) => {
-    res.render('items/create', {
-        title: 'Create Item'
+router.get('/create', (req, res) => {
+    res.render('pages/addItem', {
+        title: 'Add New Item',
     });
 });
 
-// Create item
-router.post('/', ensureAuthenticated, upload.array('images', 5), itemController.createItem);
+// Get single item
+router.get('/:id', itemController.getItem);
 
 // Edit item form
 router.get('/:id/edit', ensureAuthenticated, async (req, res) => {
