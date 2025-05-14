@@ -1,27 +1,58 @@
 const userService = require('../services/userService');
+const User = require('../models/User');
+const fs = require('fs').promises;
+const path = require('path');
 
 // Get user profile
 exports.getProfile = async (req, res) => {
     try {
-        const { user, items, trades } = await userService.getProfileDataService(req.user.id);
-        res.render('profile', { user, items, trades });
+        const user = await User.findById(req.user.id);
+        res.render('users/profile', {
+            title: 'Edit Profile',
+            user
+        });
     } catch (err) {
         console.error(err);
-        res.status(500).render('error', { message: 'Server Error' });
+        req.flash('error_msg', 'Error loading profile');
+        res.redirect('/dashboard');
     }
 };
 
 // Update user profile
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, location, bio } = req.body;
-        const profilePicture = req.file ? req.file.filename : undefined;
-        await userService.updateProfileService(req.user.id, { name, location, bio, profilePicture });
+        const { firstName, lastName, email, phone, bio, location, website } = req.body;
+        const updateData = {
+            firstName,
+            lastName,
+            email,
+            phone,
+            bio,
+            location,
+            website
+        };
+
+        // Handle profile picture upload
+        if (req.file) {
+            // Delete old profile picture if it exists
+            const user = await User.findById(req.user.id);
+            if (user.profilePicture) {
+                try {
+                    await fs.unlink(path.join(__dirname, '../public/uploads/profiles/', user.profilePicture));
+                } catch (err) {
+                    console.error('Error deleting old profile picture:', err);
+                }
+            }
+            updateData.profilePicture = req.file.filename;
+        }
+
+        await User.findByIdAndUpdate(req.user.id, updateData, { new: true });
         req.flash('success_msg', 'Profile updated successfully');
-        res.redirect('/profile');
+        res.redirect('/users/profile');
     } catch (err) {
         console.error(err);
-        res.status(500).render('error', { message: 'Server Error' });
+        req.flash('error_msg', 'Error updating profile');
+        res.redirect('/users/profile');
     }
 };
 

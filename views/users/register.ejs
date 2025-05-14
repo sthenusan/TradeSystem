@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Barter Trading System</title>
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <%- include('../partials/navbar') %>
+
+    <!-- Flash Messages -->
+    <%- include('../partials/messages') %>
+    
+    <main style="padding: 0;">
+        <!-- Sign up Section -->
+        <section id="sign-up" style="padding: 40px 0; display: flex; justify-content: center; align-items: center;">
+            <div style="max-width: 480px; width: 100%; padding: 40px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">Create your account</h2>
+                    <p style="color: #666; margin-bottom: 32px;">Join our barter trading community</p>
+                </div>
+
+                <form action="/users/register" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; gap: 12px;">
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                            <label style="display: flex; gap: 4px; font-weight: 500;">
+                                First Name
+                                <span style="color: #dc3545;">*</span>
+                            </label>
+                            <input type="text" name="firstName" placeholder="John" required
+                                style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                            <label style="display: flex; gap: 4px; font-weight: 500;">
+                                Last Name
+                                <span style="color: #dc3545;">*</span>
+                            </label>
+                            <input type="text" name="lastName" placeholder="Doe" required
+                                style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; gap: 4px; font-weight: 500;">
+                            Email address
+                            <span style="color: #dc3545;">*</span>
+                        </label>
+                        <input type="email" name="email" placeholder="your@email.com" required
+                            style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; gap: 4px; font-weight: 500;">
+                            Password
+                            <span style="color: #dc3545;">*</span>
+                        </label>
+                        <input type="password" name="password" placeholder="••••••••" required
+                            style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
+                        <p style="color: #666; font-size: 0.875rem; margin: 4px 0 0 0;">
+                            Must be at least 8 characters long
+                        </p>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; gap: 4px; font-weight: 500;">
+                            Confirm Password
+                            <span style="color: #dc3545;">*</span>
+                        </label>
+                        <input type="password" name="confirmPassword" placeholder="••••••••" required
+                            style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                        <input type="checkbox" name="terms" required style="width: 16px; height: 16px; cursor: pointer;" />
+                        <label style="color: #666; cursor: pointer;">
+                            I agree to the <a href="/terms" style="color: #4CAF50; text-decoration: none;">Terms of Service</a> and <a href="/privacy" style="color: #4CAF50; text-decoration: none;">Privacy Policy</a>
+                        </label>
+                    </div>
+
+                    <button type="submit" style="width: 100%; background-color: #4CAF50; color: white; padding: 10px; 
+                        border: none; border-radius: 4px; font-size: 14px; font-weight: 500; margin-top: 8px;
+                        cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="margin-right: 4px;">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <circle cx="9" cy="7" r="4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M19 8v6m3-3h-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Create Account
+                    </button>
+
+                    <div style="text-align: center; margin-top: 12px;">
+                        <div style="color: #666; margin-bottom: 12px;">Already have an account?</div>
+                        <a href="/users/login" style="color: #4CAF50; text-decoration: none; font-weight: 500; margin-top: 8px; display: inline-block;">
+                            Sign in instead
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <%- include('../partials/footer') %>
+
+    <!-- Materialize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/main.js"></script>
+</body>
+</html> 
