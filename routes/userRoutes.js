@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require('passport');
 const { forwardAuthenticated, ensureAuthenticated } = require('../middleware/auth');
 const userController = require('../controllers/userController');
+const User = require('../models/User');
 const multer = require('multer');
 const path = require('path');
 
@@ -52,68 +53,76 @@ router.get('/register', forwardAuthenticated, (req, res) => {
 });
 
 // Register handle
-router.post('/register', (req, res) => {
-    const { name, email, password, password2 } = req.body;
-    let errors = [];
+router.post('/register', async (req, res) => {
+    try {
+        const { firstName, lastName, email, password, confirmPassword, terms } = req.body;
+        let errors = [];
 
-    // Check required fields
-    if (!name || !email || !password || !password2) {
-        errors.push({ msg: 'Please fill in all fields' });
-    }
+        // Check required fields
+        if (!firstName || !lastName || !email || !password || !confirmPassword) {
+            errors.push({ msg: 'Please fill in all required fields' });
+        }
 
-    // Check passwords match
-    if (password !== password2) {
-        errors.push({ msg: 'Passwords do not match' });
-    }
+        // Check terms acceptance
+        if (!terms) {
+            errors.push({ msg: 'You must accept the Terms of Service and Privacy Policy' });
+        }
 
-    // Check password length
-    if (password.length < 6) {
-        errors.push({ msg: 'Password should be at least 6 characters' });
-    }
+        // Check passwords match
+        if (password !== confirmPassword) {
+            errors.push({ msg: 'Passwords do not match' });
+        }
 
-    if (errors.length > 0) {
-        res.render('users/register', {
-            title: 'Register',
-            errors,
-            name,
-            email
+        // Check password length
+        if (password.length < 8) {
+            errors.push({ msg: 'Password must be at least 8 characters long' });
+        }
+
+        // Check email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            errors.push({ msg: 'Please enter a valid email address' });
+        }
+
+        if (errors.length > 0) {
+            return res.render('users/register', {
+                title: 'Register',
+                errors,
+                firstName,
+                lastName,
+                email
+            });
+        }
+
+        // Check if email already exists
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+        if (existingUser) {
+            errors.push({ msg: 'Email is already registered' });
+            return res.render('users/register', {
+                title: 'Register',
+                errors,
+                firstName,
+                lastName,
+                email
+            });
+        }
+
+        // Create new user
+        const newUser = new User({
+            firstName,
+            lastName,
+            email: email.toLowerCase(),
+            password
         });
-    } else {
-        // Validation passed
-        User.findOne({ email: email }).then(user => {
-            if (user) {
-                errors.push({ msg: 'Email is already registered' });
-                res.render('users/register', {
-                    title: 'Register',
-                    errors,
-                    name,
-                    email
-                });
-            } else {
-                const newUser = new User({
-                    name,
-                    email,
-                    password
-                });
 
-                bcrypt.genSalt(10, (err, salt) => {
-                    bcrypt.hash(newUser.password, salt, (err, hash) => {
-                        if (err) throw err;
-                        newUser.password = hash;
-                        newUser
-                            .save()
-                            .then(user => {
-                                req.flash(
-                                    'success_msg',
-                                    'You are now registered and can log in'
-                                );
-                                res.redirect('/users/login');
-                            })
-                            .catch(err => console.log(err));
-                    });
-                });
-            }
-        });
+        await newUser.save();
+        
+        req.flash('success_msg', 'You are now registered and can log in');
+        res.redirect('/users/login');
+    } catch (err) {
+        console.error('Registration error:', err);
+        req.flash('error_msg', 'An error occurred during registration');
+        res.redirect('/users/register');
     }
 });
 
