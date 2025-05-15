@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const User = require('../../../models/User');
 
 describe('User Model Test', () => {
@@ -14,22 +15,31 @@ describe('User Model Test', () => {
         await mongoose.connection.close();
     });
 
+    beforeEach(async () => {
+        await User.deleteMany({}); // Clear users before each test
+    });
+
     it('should create & save user successfully', async () => {
         const validUser = new User({
-            name: 'Test User',
-            email: 'test@example.com',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'test1@example.com',
             password: 'password123'
         });
         const savedUser = await validUser.save();
 
         expect(savedUser._id).toBeDefined();
-        expect(savedUser.name).toBe(validUser.name);
+        expect(savedUser.firstName).toBe(validUser.firstName);
+        expect(savedUser.lastName).toBe(validUser.lastName);
         expect(savedUser.email).toBe(validUser.email);
-        expect(savedUser.password).not.toBe(validUser.password); // Password should be hashed
+        
+        // Verify password is hashed and can be compared
+        const isMatch = await bcrypt.compare('password123', savedUser.password);
+        expect(isMatch).toBe(true);
     });
 
     it('should fail to save user without required fields', async () => {
-        const userWithoutRequiredField = new User({ name: 'Test User' });
+        const userWithoutRequiredField = new User({ firstName: 'John' });
         let err;
 
         try {
@@ -43,7 +53,8 @@ describe('User Model Test', () => {
 
     it('should fail to save user with invalid email', async () => {
         const userWithInvalidEmail = new User({
-            name: 'Test User',
+            firstName: 'John',
+            lastName: 'Doe',
             email: 'invalid-email',
             password: 'password123'
         });
@@ -60,8 +71,9 @@ describe('User Model Test', () => {
 
     it('should fail to save user with short password', async () => {
         const userWithShortPassword = new User({
-            name: 'Test User',
-            email: 'test@example.com',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'test2@example.com',
             password: '123'
         });
         let err;
@@ -77,22 +89,24 @@ describe('User Model Test', () => {
 
     it('should update user successfully', async () => {
         const user = new User({
-            name: 'Test User',
-            email: 'test@example.com',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'test3@example.com',
             password: 'password123'
         });
         await user.save();
 
-        user.name = 'Updated Name';
+        user.firstName = 'Jane';
         const updatedUser = await user.save();
 
-        expect(updatedUser.name).toBe('Updated Name');
+        expect(updatedUser.firstName).toBe('Jane');
     });
 
     it('should delete user successfully', async () => {
         const user = new User({
-            name: 'Test User',
-            email: 'test@example.com',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'test4@example.com',
             password: 'password123'
         });
         await user.save();

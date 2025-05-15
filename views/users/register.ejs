@@ -21,6 +21,14 @@
             pointer-events: auto !important;
             vertical-align: middle;
         }
+
+        /* Password requirements animation */
+        .password-requirements li {
+            transition: color 0.3s ease;
+        }
+        .password-requirements i {
+            transition: color 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -75,9 +83,6 @@
                         </label>
                         <input type="password" name="password" placeholder="••••••••" required
                             style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px;" />
-                        <p style="color: #666; font-size: 0.875rem; margin: 4px 0 0 0;">
-                            Must be at least 8 characters long
-                        </p>
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -121,5 +126,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <!-- Custom JS -->
     <script src="/js/main.js"></script>
+    <!-- Password Validation -->
+    <script src="/js/passwordValidation.js"></script>
 </body>
 </html> 

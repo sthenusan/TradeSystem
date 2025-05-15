@@ -5,8 +5,8 @@ const { ensureAuthenticated } = require('../middleware/auth');
 // Home page
 router.get('/', (req, res) => {
     res.render('index', {
-        title: 'Barter Trading System',
-        user: req.user
+        title: 'Home',
+        currentPage: 'home'
     });
 });
 

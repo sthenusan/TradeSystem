@@ -41,14 +41,17 @@ function checkFileType(file, cb) {
 // Login page
 router.get('/login', forwardAuthenticated, (req, res) => {
     res.render('users/login', {
-        title: 'Login'
+        title: 'Login',
+        currentPage: 'login'
     });
 });
 
 // Register page
 router.get('/register', forwardAuthenticated, (req, res) => {
     res.render('users/register', {
-        title: 'Register'
+        title: 'Register',
+        currentPage: 'register',
+        formData: {}
     });
 });
 
@@ -60,51 +63,46 @@ router.post('/register', async (req, res) => {
 
         // Check required fields
         if (!firstName || !lastName || !email || !password || !confirmPassword) {
-            errors.push({ msg: 'Please fill in all required fields' });
+            errors.push('Please fill in all required fields');
         }
 
         // Check terms acceptance
         if (!terms) {
-            errors.push({ msg: 'You must accept the Terms of Service and Privacy Policy' });
+            errors.push('You must accept the Terms of Service and Privacy Policy');
         }
 
         // Check passwords match
         if (password !== confirmPassword) {
-            errors.push({ msg: 'Passwords do not match' });
+            errors.push('Passwords do not match');
         }
 
         // Check password length
         if (password.length < 8) {
-            errors.push({ msg: 'Password must be at least 8 characters long' });
+            errors.push('Password must be at least 8 characters long');
+        }
+
+        // Check password complexity
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            errors.push('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
         }
 
         // Check email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            errors.push({ msg: 'Please enter a valid email address' });
+            errors.push('Please enter a valid email address');
         }
 
         if (errors.length > 0) {
-            return res.render('users/register', {
-                title: 'Register',
-                errors,
-                firstName,
-                lastName,
-                email
-            });
+            errors.forEach(error => req.flash('error_msg', error));
+            return res.redirect('/users/register');
         }
 
         // Check if email already exists
         const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
-            errors.push({ msg: 'Email is already registered' });
-            return res.render('users/register', {
-                title: 'Register',
-                errors,
-                firstName,
-                lastName,
-                email
-            });
+            req.flash('error_msg', 'Email is already registered');
+            return res.redirect('/users/register');
         }
 
         // Create new user
@@ -136,10 +134,14 @@ router.post('/login', (req, res, next) => {
 });
 
 // Logout handle
-router.get('/logout', (req, res) => {
-    req.logout();
-    req.flash('success_msg', 'You are logged out');
-    res.redirect('/users/login');
+router.get('/logout', (req, res, next) => {
+    req.logout((err) => {
+        if (err) {
+            return next(err);
+        }
+        req.flash('success_msg', 'You have been logged out');
+        res.redirect('/');
+    });
 });
 
 // Profile routes
