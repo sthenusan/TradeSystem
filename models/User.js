@@ -29,6 +29,16 @@ const UserSchema = new mongoose.Schema({
     required: true,
     minlength: 8
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationCode: {
+    type: String
+  },
+  verificationCodeExpires: {
+    type: Date
+  },
   profilePicture: {
     type: String,
     default: "default-profile.png"
@@ -51,7 +61,18 @@ const UserSchema = new mongoose.Schema({
   website: {
     type: String,
     trim: true,
-    match: [/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/, 'Please enter a valid URL']
+    validate: {
+      validator: function(v) {
+        if (!v) return true; // Allow empty values
+        try {
+          new URL(v);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      },
+      message: 'Please enter a valid URL'
+    }
   },
   rating: {
     type: Number,
