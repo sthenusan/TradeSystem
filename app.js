@@ -1,24 +1,28 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const path = require('path');
 const passport = require('passport');
 const flash = require('connect-flash');
+const connectDB = require('./config/db');
 
 // Initialize express app
 const app = express();
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/barter-trading')
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
+// Connect to MongoDB
+if (process.env.NODE_ENV !== 'test') {
+    connectDB();
+}
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(__dirname, 'public', 'uploads', 'profiles');
+require('fs').mkdirSync(uploadDir, { recursive: true });
 
 // View engine setup
 app.set('view engine', 'ejs');
@@ -34,7 +38,10 @@ app.use(session({
         collectionName: 'sessions'
     }),
     cookie: {
-        maxAge: 1000 * 60 * 60 * 24 // 24 hours
+        maxAge: 1000 * 60 * 60 * 24, // 24 hours
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
     }
 }));
 
@@ -52,6 +59,7 @@ app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success_msg');
     res.locals.error_msg = req.flash('error_msg');
     res.locals.error = req.flash('error');
+    res.locals.currentPage = 'home';  // Default to home
     next();
 });
 
@@ -61,17 +69,28 @@ app.use('/users', require('./routes/userRoutes'));
 app.use('/items', require('./routes/itemRoutes'));
 app.use('/trades', require('./routes/tradeRoutes'));
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).render('error', {
-        message: 'Something went wrong!',
-        error: process.env.NODE_ENV === 'development' ? err : {}
-    });
+// 404 handler
+app.all('*', (req, res, next) => {
+    const err = new Error(`Can't find ${req.originalUrl} on this server!`);
+    err.status = 'fail';
+    err.statusCode = 404;
+    next(err);
 });
+
+// Global error handler
+app.use(require('./middleware/errorHandler'));
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+    console.error('UNHANDLED REJECTION! 💥 Shutting down...');
+    console.error(err.name, err.message);
+    server.close(() => {
+        process.exit(1);
+    });
 }); 

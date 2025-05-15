@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require('passport');
 const { forwardAuthenticated, ensureAuthenticated } = require('../middleware/auth');
 const userController = require('../controllers/userController');
+const User = require('../models/User');
 const multer = require('multer');
 const path = require('path');
 
@@ -40,80 +41,86 @@ function checkFileType(file, cb) {
 // Login page
 router.get('/login', forwardAuthenticated, (req, res) => {
     res.render('users/login', {
-        title: 'Login'
+        title: 'Login',
+        currentPage: 'login'
     });
 });
 
 // Register page
 router.get('/register', forwardAuthenticated, (req, res) => {
     res.render('users/register', {
-        title: 'Register'
+        title: 'Register',
+        currentPage: 'register',
+        formData: {}
     });
 });
 
 // Register handle
-router.post('/register', (req, res) => {
-    const { name, email, password, password2 } = req.body;
-    let errors = [];
+router.post('/register', async (req, res) => {
+    try {
+        const { firstName, lastName, email, password, confirmPassword, terms } = req.body;
+        let errors = [];
 
-    // Check required fields
-    if (!name || !email || !password || !password2) {
-        errors.push({ msg: 'Please fill in all fields' });
-    }
+        // Check required fields
+        if (!firstName || !lastName || !email || !password || !confirmPassword) {
+            errors.push('Please fill in all required fields');
+        }
 
-    // Check passwords match
-    if (password !== password2) {
-        errors.push({ msg: 'Passwords do not match' });
-    }
+        // Check terms acceptance
+        if (!terms) {
+            errors.push('You must accept the Terms of Service and Privacy Policy');
+        }
 
-    // Check password length
-    if (password.length < 6) {
-        errors.push({ msg: 'Password should be at least 6 characters' });
-    }
+        // Check passwords match
+        if (password !== confirmPassword) {
+            errors.push('Passwords do not match');
+        }
 
-    if (errors.length > 0) {
-        res.render('users/register', {
-            title: 'Register',
-            errors,
-            name,
-            email
+        // Check password length
+        if (password.length < 8) {
+            errors.push('Password must be at least 8 characters long');
+        }
+
+        // Check password complexity
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            errors.push('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
+        }
+
+        // Check email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            errors.push('Please enter a valid email address');
+        }
+
+        if (errors.length > 0) {
+            errors.forEach(error => req.flash('error_msg', error));
+            return res.redirect('/users/register');
+        }
+
+        // Check if email already exists
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+        if (existingUser) {
+            req.flash('error_msg', 'Email is already registered');
+            return res.redirect('/users/register');
+        }
+
+        // Create new user
+        const newUser = new User({
+            firstName,
+            lastName,
+            email: email.toLowerCase(),
+            password
         });
-    } else {
-        // Validation passed
-        User.findOne({ email: email }).then(user => {
-            if (user) {
-                errors.push({ msg: 'Email is already registered' });
-                res.render('users/register', {
-                    title: 'Register',
-                    errors,
-                    name,
-                    email
-                });
-            } else {
-                const newUser = new User({
-                    name,
-                    email,
-                    password
-                });
 
-                bcrypt.genSalt(10, (err, salt) => {
-                    bcrypt.hash(newUser.password, salt, (err, hash) => {
-                        if (err) throw err;
-                        newUser.password = hash;
-                        newUser
-                            .save()
-                            .then(user => {
-                                req.flash(
-                                    'success_msg',
-                                    'You are now registered and can log in'
-                                );
-                                res.redirect('/users/login');
-                            })
-                            .catch(err => console.log(err));
-                    });
-                });
-            }
-        });
+        await newUser.save();
+        
+        req.flash('success_msg', 'You are now registered and can log in');
+        res.redirect('/users/login');
+    } catch (err) {
+        console.error('Registration error:', err);
+        req.flash('error_msg', 'An error occurred during registration');
+        res.redirect('/users/register');
     }
 });
 
@@ -127,10 +134,14 @@ router.post('/login', (req, res, next) => {
 });
 
 // Logout handle
-router.get('/logout', (req, res) => {
-    req.logout();
-    req.flash('success_msg', 'You are logged out');
-    res.redirect('/users/login');
+router.get('/logout', (req, res, next) => {
+    req.logout((err) => {
+        if (err) {
+            return next(err);
+        }
+        req.flash('success_msg', 'You have been logged out');
+        res.redirect('/');
+    });
 });
 
 // Profile routes
