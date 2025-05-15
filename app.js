@@ -70,11 +70,19 @@ app.use('/items', require('./routes/itemRoutes'));
 app.use('/trades', require('./routes/tradeRoutes'));
 
 // 404 handler
-app.all('*', (req, res, next) => {
-    const err = new Error(`Can't find ${req.originalUrl} on this server!`);
-    err.status = 'fail';
-    err.statusCode = 404;
-    next(err);
+app.use((req, res, next) => {
+    if (req.accepts('html')) {
+        res.status(404).render('error', {
+            title: 'Page Not Found',
+            msg: 'The page you are looking for does not exist.',
+            error: { status: 404 }
+        });
+    } else {
+        res.status(404).json({
+            status: 'error',
+            message: 'Not Found'
+        });
+    }
 });
 
 // Global error handler
