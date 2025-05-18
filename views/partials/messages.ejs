@@ -1,0 +1,29 @@
+<% if(locals.success_msg && success_msg.length> 0) { %>
+    <div class="card-panel green lighten-4 green-text text-darken-4">
+        <%= success_msg %>
+    </div>
+    <% } %>
+
+        <% if(locals.error_msg && error_msg.length> 0) { %>
+            <div class="card-panel red lighten-4 red-text text-darken-4">
+                <%= error_msg %>
+            </div>
+            <% } %>
+
+                <% if(locals.error && error.length> 0) { %>
+                    <div class="card-panel red lighten-4 red-text text-darken-4">
+                        <%= error %>
+                    </div>
+                    <% } %>
+
+                        <% if(locals.errors && errors.length> 0) { %>
+                            <div class="card-panel red lighten-4 red-text text-darken-4">
+                                <ul>
+                                    <% errors.forEach(function(error) { %>
+                                        <li>
+                                            <%= error.msg %>
+                                        </li>
+                                        <% }); %>
+                                </ul>
+                            </div>
+                            <% } %>

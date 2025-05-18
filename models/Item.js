@@ -1,11 +1,63 @@
 const mongoose = require('mongoose');
 
 const itemSchema = new mongoose.Schema({
-  title: String,
-  description: String,
-  imageUrl: String,
-  category: String
+    title: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    description: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    category: {
+        type: String,
+        required: true,
+        enum: ['Electronics', 'Furniture', 'Clothing', 'Books', 'Sports', 'Other']
+    },
+    condition: {
+        type: String,
+        required: true,
+        enum: ['New', 'Like New', 'Good', 'Fair', 'Poor']
+    },
+    images: [{
+        type: String,
+        required: true
+    }],
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        // TODO: Add required
+        // required: true
+    },
+    status: {
+        type: String,
+        enum: ['Available', 'Pending', 'Traded'],
+        default: 'Available'
+    },
+    location: {
+        type: String,
+        trim: true,
+        required: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    }
 });
 
-// ⬇️ 3rd argument: force collection name
-module.exports = mongoose.model('Item', itemSchema, 'tradesystem');
+// Update the updatedAt timestamp before saving
+itemSchema.pre('save', function (next) {
+    this.updatedAt = Date.now();
+    next();
+});
+
+// Create text index for search functionality
+itemSchema.index({ title: 'text', description: 'text' });
+
+module.exports = mongoose.model('Item', itemSchema); 

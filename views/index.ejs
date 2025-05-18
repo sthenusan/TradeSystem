@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barter Trading System</title>
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <%- include('partials/navbar') %>
+
+        <!-- Flash Messages -->
+        <%- include('partials/messages') %>
+            <main style="padding: 0;">
+                <!-- Hero Section -->
+                <section id="hero"
+                    style="background: linear-gradient(0deg, #f5f5f5 0%, #dcf5f5 100%); padding: 60px 0;">
+                    <div class="container hero-section fade-in"
+                        style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px;">
+                        <!-- Left: Text -->
+                        <div style="flex: 1 1 340px; min-width: 300px; max-width: 520px;">
+                            <h1
+                                style="font-size: 2.5rem; font-weight: 700; color: #111; margin-bottom: 20px; line-height: 1.2;">
+                                Exchange Goods & Services Without Money
+                            </h1>
+                            <p style="font-size: 1.15rem; color: #444; margin-bottom: 32px;">
+                                Join our community-driven barter platform where you can trade what you have for what you
+                                need. No cash required.
+                            </p>
+                            <div style="display: flex; gap: 16px;">
+                                <a href="/users/register" class="btn waves-effect waves-light"
+                                    style="display: flex; align-items: center; gap: 8px;">
+                                    Get Started
+                                    <i class="material-icons right" style="font-size: 1.2rem;">arrow_forward</i>
+                                </a>
+                                <a href="#why-us" class="btn-flat">Learn More</a>
+                            </div>
+                        </div>
+                        <!-- Right: Image -->
+                        <div
+                            style="flex: 1 1 340px; min-width: 280px; max-width: 600px; display: flex; justify-content: center;">
+                            <img src="/images/img-hero.svg" alt="Barter Exchange"
+                                style="width: 100%; max-width: 600px; border-radius: 12px; object-fit: cover;" />
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Why Us Section -->
+                <section id="why-us" style="padding: 40px 0;">
+                    <div class="container">
+                        <h2 class="section-title" style="margin-bottom: 12px;">
+                            Why Choose Barter Trading?
+                        </h2>
+                        <p class="section-subtitle" style="margin-bottom: 40px;">
+                            Our platform makes bartering simple, secure, and social. Trade goods and services with
+                            confidence.
+                        </p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 24px; justify-content: center;">
+                            <!-- Card 1 -->
+                            <div class="card"
+                                style="flex: 1 1 220px; display: flex; flex-direction: column; align-items: flex-start;">
+                                <img src="/images/ic-search.svg" alt="Find"
+                                    style="height: 32px; margin-bottom: 18px;" />
+                                <div class="card-title" style="margin-bottom: 8px;">Find What You Need</div>
+                                <div class="card-description">Browse thousands of items and services offered by
+                                    community members near you.</div>
+                            </div>
+                            <!-- Card 2 -->
+                            <div class="card"
+                                style="flex: 1 1 220px; display: flex; flex-direction: column; align-items: flex-start;">
+                                <img src="/images/ic-chat.svg" alt="Direct Communication"
+                                    style="height: 32px; margin-bottom: 18px;" />
+                                <div class="card-title" style="margin-bottom: 8px;">Direct Communication</div>
+                                <div class="card-description">Chat directly with traders to negotiate and arrange
+                                    exchanges.</div>
+                            </div>
+                            <!-- Card 3 -->
+                            <div class="card"
+                                style="flex: 1 1 220px; display: flex; flex-direction: column; align-items: flex-start;">
+                                <img src="/images/ic-shield.svg" alt="Secure Trading"
+                                    style="height: 32px; margin-bottom: 18px;" />
+                                <div class="card-title" style="margin-bottom: 8px;">Secure Trading</div>
+                                <div class="card-description">Our verification system ensures safe and reliable
+                                    transactions.</div>
+                            </div>
+                            <!-- Card 4 -->
+                            <div class="card"
+                                style="flex: 1 1 220px; display: flex; flex-direction: column; align-items: flex-start;">
+                                <img src="/images/ic-users.svg" alt="Community Driven"
+                                    style="height: 32px; margin-bottom: 18px;" />
+                                <div class="card-title" style="margin-bottom: 8px;">Community Driven</div>
+                                <div class="card-description">Join a growing network of people who believe in
+                                    collaborative consumption.</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- How It Works Section -->
+                <section id="how-it-works" style="padding: 40px 0;">
+                    <div class="container">
+                        <h2 class="section-title" style="margin-bottom: 12px;">How Barter Trading Works</h2>
+                        <p class="section-subtitle" style="margin-bottom: 40px;">Trading with others is easy with our
+                            simple 4-step process.</p>
+                        <div
+                            style="display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; margin-bottom: 32px;">
+                            <!-- Step 1 -->
+                            <div class="card"
+                                style="flex: 1 1 220px; max-width: 260px; min-width: 220px; padding: 0; overflow: hidden;">
+                                <div class="bg-gradient-1"
+                                    style="padding: 24px 16px; display: flex; flex-direction: column; align-items: center;">
+                                    <img src="/images/ic-list.svg" alt="List"
+                                        style="height: 48px; background: rgba(255,255,255,0.08); border-radius: 50%; padding: 8px;" />
+                                </div>
+                                <div style="padding: 24px 20px 20px 20px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <span
+                                            style="background: #059669; color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1rem;">1</span>
+                                        <span class="card-title">List Your Items</span>
+                                    </div>
+                                    <div class="card-description">Post what you have to offer and what you're looking
+                                        for in exchange.</div>
+                                </div>
+                            </div>
+                            <!-- Step 2 -->
+                            <div class="card"
+                                style="flex: 1 1 220px; max-width: 260px; min-width: 220px; padding: 0; overflow: hidden;">
+                                <div class="bg-gradient-2"
+                                    style="padding: 24px 16px; display: flex; flex-direction: column; align-items: center;">
+                                    <img src="/images/ic-refresh.svg" alt="Find Matches"
+                                        style="height: 48px; background: rgba(255,255,255,0.08); border-radius: 50%; padding: 8px;" />
+                                </div>
+                                <div style="padding: 24px 20px 20px 20px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <span
+                                            style="background: #059669; color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1rem;">2</span>
+                                        <span class="card-title">Find Matches</span>
+                                    </div>
+                                    <div class="card-description">Browse listings or get notified when someone wants
+                                        what you have.</div>
+                                </div>
+                            </div>
+                            <!-- Step 3 -->
+                            <div class="card"
+                                style="flex: 1 1 220px; max-width: 260px; min-width: 220px; padding: 0; overflow: hidden;">
+                                <div class="bg-gradient-3"
+                                    style="padding: 24px 16px; display: flex; flex-direction: column; align-items: center;">
+                                    <img src="/images/ic-chat-white.svg" alt="Negotiate"
+                                        style="height: 48px; background: rgba(255,255,255,0.08); border-radius: 50%; padding: 8px;" />
+                                </div>
+                                <div style="padding: 24px 20px 20px 20px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <span
+                                            style="background: #059669; color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1rem;">3</span>
+                                        <span class="card-title">Negotiate</span>
+                                    </div>
+                                    <div class="card-description">Chat with potential traders to agree on the terms of
+                                        your exchange.</div>
+                                </div>
+                            </div>
+                            <!-- Step 4 -->
+                            <div class="card"
+                                style="flex: 1 1 220px; max-width: 260px; min-width: 220px; padding: 0; overflow: hidden;">
+                                <div class="bg-gradient-4"
+                                    style="padding: 24px 16px; display: flex; flex-direction: column; align-items: center;">
+                                    <img src="/images/ic-complete.svg" alt="Complete Trade"
+                                        style="height: 48px; background: rgba(255,255,255,0.08); border-radius: 50%; padding: 8px;" />
+                                </div>
+                                <div style="padding: 24px 20px 20px 20px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <span
+                                            style="background: #059669; color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1rem;">4</span>
+                                        <span class="card-title">Complete Trade</span>
+                                    </div>
+                                    <div class="card-description">Meet up safely to exchange items or services and leave
+                                        feedback.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: center;">
+                            <a href="/users/register" class="btn waves-effect waves-light">Join Us Today</a>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <!-- Footer -->
+            <%- include('partials/footer') %>
+
+                <!-- Materialize JS -->
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+                <!-- Auto Logout -->
+                <script src="/js/autoLogout.js"></script>
+                <!-- Custom JS -->
+                <script src="/js/main.js"></script>
+</body>
+
+</html>
