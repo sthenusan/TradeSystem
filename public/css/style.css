@@ -1,0 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #059669;
+    --primary-color-dark: #047857;
+    --primary-color-light: #34d399;
+    --background-color: #f5f5f5;
+    --gray-color: #d1d5db;
+    --font-family: 'Inter', Arial, Helvetica, sans-serif;
+}
+
+/* General Styles */
+body {
+    font-family: var(--font-family);
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    background-color: var(--background-color);
+    color: #000;
+}
+
+main {
+    flex: 1 0 auto;
+    padding: 20px 0;
+}
+
+/* Navigation */
+nav {
+    height: auto;
+    min-height: 0;
+    padding: 8px 0;
+}
+
+.nav-content .tabs .tab a {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.nav-content .tabs .tab a:hover,
+.nav-content .tabs .tab a.active {
+    color: #fff;
+}
+
+/* Cards */
+.card {
+    background-color: #fff;
+    padding: 32px 24px;
+    border-radius: 10px;
+    box-shadow: 0 6px 10px -2px rgba(30, 41, 59, 0.12);
+}
+
+.card-title {
+    font-weight: 600 !important;
+    color: #18181b;
+    font-size: 1.2rem !important;
+}
+
+.card-description {
+    color: #475569;
+    font-size: 1rem;
+}
+
+/* Forms */
+.input-field {
+    margin-bottom: 20px;
+}
+
+.input-field label {
+    color: #666;
+}
+
+/* Buttons */
+.btn,
+.btn-large,
+.btn-small {
+    background-color: var(--primary-color) !important;
+    color: #fff !important;
+    font-weight: 400;
+    border-radius: 6px;
+    padding: 20px 16px;
+    transition: background 0.2s;
+    box-shadow: none !important;
+    outline: none !important;
+    text-transform: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn:hover,
+.btn-large:hover,
+.btn-small:hover {
+    background-color: var(--primary-color-dark) !important;
+}
+
+.btn:focus,
+.btn-large:focus,
+.btn-small:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.btn-flat,
+.btn-flat:focus {
+    background-color: transparent !important;
+    color: #222 !important;
+    font-weight: 400;
+    border-radius: 6px;
+    padding: 20px 16px;
+    transition: background 0.2s, border-color 0.2s;
+    box-shadow: none !important;
+    outline: none !important;
+    text-transform: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--gray-color);
+}
+
+.btn-flat:hover {
+    background-color: var(--gray-color) !important;
+    color: #222 !important;
+}
+
+.text-btn {
+    color: var(--primary-color);
+    font-weight: 400;
+}
+
+.text-btn:hover {
+    color: var(--primary-color-dark) !important;
+}
+
+.link {
+    transition: color 0.2s;
+}
+
+.link:hover {
+    color: var(--primary-color) !important;
+    background: none !important;
+    text-decoration: none !important;
+}
+
+.btn-floating {
+    position: fixed;
+    right: 23px;
+    bottom: 23px;
+}
+
+/* Item Grid */
+.item-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+/* Section Title and Subtitle */
+.section-title {
+    text-align: center;
+    color: #18181b;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.section-subtitle {
+    text-align: center;
+    color: #475569;
+    font-size: 1.15rem;
+    font-weight: 300;
+}
+
+/* Gradient Background Color */
+.bg-gradient-1 {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.bg-gradient-2 {
+    background: linear-gradient(90deg, #059669 0%, #047857 100%);
+}
+
+.bg-gradient-3 {
+    background: linear-gradient(90deg, #047857 0%, #065f46 100%);
+}
+
+.bg-gradient-4 {
+    background: linear-gradient(90deg, #065f46 0%, #064e3b 100%);
+}
+
+/* Responsive Design */
+@media only screen and (max-width: 600px) {
+    .item-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .message.sent {
+        margin-left: 10%;
+    }
+
+    .message.received {
+        margin-right: 10%;
+    }
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
