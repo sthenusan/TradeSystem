@@ -1,0 +1,21 @@
+{
+  "name": "tradesystem",
+  "version": "1.0.0",
+  "description": "TradeSystem - Search and Browse Items",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^7.6.0",
+    "ejs": "^3.1.9"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

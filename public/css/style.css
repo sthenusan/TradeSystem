@@ -1,0 +1,76 @@
+/* General spacing */
+.container {
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+/* Search Input Field */
+.input-field input[type="text"] {
+  border-bottom: 2px solid #26a69a;
+  box-shadow: none;
+  font-size: 1rem;
+}
+
+.input-field input[type="text"]:focus {
+  border-bottom: 2px solid #2e7d32; /* Figma-based green */
+  box-shadow: 0 1px 0 0 #2e7d32;
+}
+
+/* Search Button */
+.btn-search {
+  background-color: #26a69a;
+  margin-top: 10px;
+  border-radius: 8px;
+  padding: 0 24px;
+  text-transform: none;
+}
+
+.btn-search:hover {
+  background-color: #00897b;
+}
+
+/* Generic Button Styling (fallback for all .btn) */
+.btn {
+  border-radius: 8px;
+  padding: 0 24px;
+  text-transform: none;
+}
+
+/* Card Styling */
+.card {
+  transition: box-shadow 0.3s ease;
+  border-radius: 8px;
+}
+
+.card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.card-image img {
+  height: 200px;
+  object-fit: cover;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+/* Text content in cards */
+.card .card-title {
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.card-content p {
+  font-size: 0.95rem;
+  color: #616161;
+  margin-top: 8px;
+}
+
+/* Card action */
+.card-action {
+  font-size: 0.85rem;
+  color: #00796b;
+}
+
+.grey-text-light {
+  color: #B0BEC5;
+}
