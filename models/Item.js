@@ -28,8 +28,7 @@ const itemSchema = new mongoose.Schema({
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        // TODO: Add required
-        // required: true
+        required: true
     },
     status: {
         type: String,
