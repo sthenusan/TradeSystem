@@ -7,10 +7,20 @@ async function getItemsService(queryParams) {
     const skip = (page - 1) * limit;
 
     let query = {};
+
+    // Category and condition filters
     if (queryParams.category) query.category = queryParams.category;
     if (queryParams.condition) query.condition = queryParams.condition;
     if (queryParams.location) query.location = new RegExp(queryParams.location, 'i');
-    if (queryParams.search) query.$text = { $search: queryParams.search };
+
+    // Search functionality
+    if (queryParams.search) {
+        const searchRegex = new RegExp(queryParams.search, 'i');
+        query.$or = [
+            { title: searchRegex },
+            { description: searchRegex }
+        ];
+    }
 
     const items = await Item.find(query)
         .populate('owner', 'name rating')

@@ -4,11 +4,11 @@ const itemService = require('../services/itemService');
 exports.getItems = async (req, res) => {
     try {
         const { items, currentPage, pages } = await itemService.getItemsService(req.query);
-        res.render('items/index', {
+        res.render('items/browseItem', {
             items,
             currentPage,
             pages,
-            query: req.query
+            query: req.query,
         });
     } catch (err) {
         console.error(err);
@@ -35,11 +35,7 @@ exports.createItem = async (req, res) => {
     try {
         const { title, description, category, condition, location } = req.body;
         const images = Array.isArray(req.files) ? req.files.map(file => file.filename) : [];
-
-        // TODO: Add owner
-        // const owner = req.user.id;
-        // Create a valid ObjectId for testing (24 characters)
-        const owner = "65f1a1234567890123456789";
+        const owner = req.user.id;
 
         // Validate required fields
         if (!title || !description || !category || !condition || !location) {
