@@ -85,6 +85,10 @@ const UserSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  averageRating: {
+    type: Number,
+    default: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now,

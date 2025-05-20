@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { ensureAuthenticated } = require('../middleware/auth');
 const itemController = require('../controllers/itemController');
+const Activity = require('../models/Activity');
 const multer = require('multer');
 const path = require('path');
+const itemService = require('../services/itemService');
+const Item = require('../models/Item');
 
 // Configure multer for item images
 const storage = multer.diskStorage({
@@ -39,8 +42,44 @@ function checkFileType(file, cb) {
 // Get all items
 router.get('/', itemController.getItems);
 
+// Get available items for trade (API endpoint)
+router.get('/my/available', ensureAuthenticated, async (req, res) => {
+    try {
+        const items = await Item.find({
+            owner: req.user._id,
+            status: 'Available'
+        }).select('title description images');
+        
+        res.json(items);
+    } catch (error) {
+        console.error('Error fetching available items:', error);
+        res.status(500).json({ error: 'Failed to fetch available items' });
+    }
+});
+
 // Create item
-router.post('/', ensureAuthenticated, upload.array('images', 5), itemController.createItem);
+router.post('/', ensureAuthenticated, upload.array('images', 5), async (req, res) => {
+    try {
+        const item = await itemController.createItem(req, res);
+        
+        // Create activity for new item
+        await Activity.create({
+            user: req.user._id,
+            type: 'ITEM_ADDED',
+            description: `Added new item: ${item.title}`,
+            relatedItem: item._id
+        });
+
+        res.redirect('/items');
+    } catch (error) {
+        console.error('Error creating item:', error);
+        res.status(500).render('error', {
+            title: 'Error',
+            msg: 'Failed to create item',
+            error: error
+        });
+    }
+});
 
 // Create item form
 router.get('/create', (req, res) => {
@@ -79,5 +118,28 @@ router.put('/:id', ensureAuthenticated, upload.array('images', 5), itemControlle
 
 // Delete item
 router.delete('/:id', ensureAuthenticated, itemController.deleteItem);
+
+// Get browse items page
+router.get('/browse', async (req, res) => {
+    try {
+        const { items, currentPage, pages } = await itemService.getItemsService(req.query);
+        
+        res.render('items/browse', {
+            title: 'Browse Items',
+            items: items,
+            currentPage: currentPage,
+            pages: pages,
+            query: req.query,
+            user: req.user
+        });
+    } catch (error) {
+        console.error('Error fetching items:', error);
+        res.status(500).render('error', {
+            title: 'Error',
+            msg: 'Failed to fetch items',
+            error: error
+        });
+    }
+});
 
 module.exports = router; 

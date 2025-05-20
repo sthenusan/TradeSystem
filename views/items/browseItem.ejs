@@ -11,6 +11,135 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin: 2rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #26a69a;
+    }
+
+    .section-title i {
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .no-items {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+      font-style: italic;
+    }
+
+    .item-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease-in-out;
+    }
+
+    .item-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-image {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f5;
+      overflow: hidden;
+    }
+
+    .card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+    }
+
+    .item-card:hover .card-image img {
+      transform: scale(1.05);
+    }
+
+    .card-content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 15px !important;
+    }
+
+    .card-title {
+      font-size: 1.1rem !important;
+      line-height: 1.4;
+      margin-bottom: 10px;
+      font-weight: 500;
+      color: #333;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      height: 2.8em;
+    }
+
+    .card-description {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 10px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex-grow: 1;
+    }
+
+    .card-action {
+      padding: 10px 15px !important;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      background: #fafafa;
+    }
+
+    .card-category {
+      color: #666;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .card-category i {
+      font-size: 1rem;
+      margin-right: 5px;
+    }
+
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 20px 0;
+    }
+
+    @media screen and (max-width: 600px) {
+      .items-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+      }
+
+      .card-image {
+        height: 150px;
+      }
+
+      .card-title {
+        font-size: 1rem !important;
+        height: 2.4em;
+      }
+
+      .card-description {
+        -webkit-line-clamp: 2;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -26,7 +155,6 @@
           <form method="GET" action="/items">
             <div style="margin-bottom:20px;">
               <label for="search" style="font-weight:500;">Search items</label>
-              <!-- <input id="search" type="text" name="search" value="<%= query.search || '' %>"> -->
               <textarea id="search" name="search"
                 style="width:100%;margin-top:6px;padding:12px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:1rem;resize:none;"
                 placeholder="Enter title or description"></textarea>
@@ -38,48 +166,289 @@
             </div>
           </form>
 
-          <!-- Items list -->
-          <div class="row" style="margin-top: 30px;">
-            <% if (items.length> 0) { %>
-              <% items.forEach(item=> { %>
-                <div class="col s6 m4 l3">
-                  <div class="card z-depth-1" style="height: 100%;">
-                    <div class="card-image"
-                      style="height: 200px; display: flex; align-items: center; justify-content: center; background: #f5f5f5;">
-                      <img src="/uploads/items/<%= item.images[0] %>" alt="<%= item.title %>"
-                        style="max-height: 100%; max-width: 100%; object-fit: contain;">
-                    </div>
-                    <div class="card-content" style="padding: 15px;">
-                      <span class="card-title" style="font-size: 1.1rem; line-height: 1.4; margin-bottom: 10px;">
-                        <%= item.title %>
-                      </span>
-                      <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
-                        <%= item.description.length> 100 ? item.description.substring(0, 100) + '...' : item.description
-                          %>
-                      </p>
-                    </div>
-                    <div class="card-action" style="padding: 10px 15px;">
-                      <small style="color: #666;">Category: <%= item.category %></small>
+          <!-- Available Items Section -->
+          <h5 class="section-title">
+            <i class="material-icons">store</i>
+            Available Items
+          </h5>
+          <div class="items-grid">
+            <% const otherItems=items.filter(item=> item.owner._id.toString() !== user._id.toString()); %>
+              <% if (otherItems.length> 0) { %>
+                <% otherItems.forEach(item=> { %>
+                  <div class="col s12 m6 l4">
+                    <div class="card item-card" data-item-id="<%= item._id %>" data-item-title="<%= item.title %>"
+                      data-item-description="<%= item.description %>" data-item-category="<%= item.category %>"
+                      data-item-condition="<%= item.condition %>"
+                      data-item-owner="<%= item.owner.firstName + ' ' + item.owner.lastName %>"
+                      data-item-owner-id="<%= item.owner._id %>"
+                      data-item-listed="<%= new Date(item.createdAt).toLocaleDateString() %>"
+                      data-item-images='<%= JSON.stringify(item.images) %>'>
+                      <div class="card-image">
+                        <img src="/uploads/items/<%= item.images[0] %>" alt="<%= item.title %>">
+                        <span class="card-title">
+                          <%= item.title %>
+                        </span>
+                      </div>
+                      <div class="card-content">
+                        <p>
+                          <%= item.description.substring(0, 100) %>...
+                        </p>
+                        <div class="item-meta">
+                          <p><strong>Category:</strong>
+                            <%= item.category %>
+                          </p>
+                          <p><strong>Condition:</strong>
+                            <%= item.condition %>
+                          </p>
+                          <p><strong>Owner:</strong>
+                            <%= item.owner.firstName + ' ' + item.owner.lastName %>
+                          </p>
+                          <p><strong>Listed:</strong>
+                            <%= new Date(item.createdAt).toLocaleDateString() %>
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <% }) %>
-                  <% } else { %>
-                    <p class="center-align grey-text">No items found.</p>
-                    <% } %>
+                  <% }); %>
+                    <% } else { %>
+                      <div class="col s12">
+                        <p class="no-items">No other items available at the moment.</p>
+                      </div>
+                      <% } %>
           </div>
 
+          <!-- My Items Section -->
+          <h5 class="section-title">
+            <i class="material-icons">person</i>
+            My Items
+          </h5>
+          <div class="items-grid">
+            <% const myItems=items.filter(item=> item.owner._id.toString() === user._id.toString()); %>
+              <% if (myItems.length> 0) { %>
+                <% myItems.forEach(item=> { %>
+                  <div class="col s12 m6 l4">
+                    <div class="card item-card" data-item-id="<%= item._id %>" data-item-title="<%= item.title %>"
+                      data-item-description="<%= item.description %>" data-item-category="<%= item.category %>"
+                      data-item-condition="<%= item.condition %>"
+                      data-item-owner="<%= item.owner.firstName + ' ' + item.owner.lastName %>"
+                      data-item-owner-id="<%= item.owner._id %>"
+                      data-item-listed="<%= new Date(item.createdAt).toLocaleDateString() %>"
+                      data-item-images='<%= JSON.stringify(item.images) %>'>
+                      <div class="card-image">
+                        <img src="/uploads/items/<%= item.images[0] %>" alt="<%= item.title %>">
+                        <span class="card-title">
+                          <%= item.title %>
+                        </span>
+                      </div>
+                      <div class="card-content">
+                        <p>
+                          <%= item.description.substring(0, 100) %>...
+                        </p>
+                        <div class="item-meta">
+                          <p><strong>Category:</strong>
+                            <%= item.category %>
+                          </p>
+                          <p><strong>Condition:</strong>
+                            <%= item.condition %>
+                          </p>
+                          <p><strong>Owner:</strong>
+                            <%= item.owner.firstName + ' ' + item.owner.lastName %>
+                          </p>
+                          <p><strong>Listed:</strong>
+                            <%= new Date(item.createdAt).toLocaleDateString() %>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <% }); %>
+                    <% } else { %>
+                      <div class="col s12">
+                        <p class="no-items">You haven't added any items yet.</p>
+                      </div>
+                      <% } %>
+          </div>
         </div>
       </div>
     </main>
 
-    <!-- Footer -->
-    <%- include('../partials/footer') %>
+    <!-- Include the item modal -->
+    <%- include('../partials/itemModal') %>
 
-      <!-- Materialize JS -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-      <!-- Custom JS -->
-      <script src="/js/main.js"></script>
+      <!-- Include the trade proposal modal -->
+      <%- include('../partials/tradeProposalModal') %>
+
+        <!-- Footer -->
+        <%- include('../partials/footer') %>
+
+          <!-- Materialize JS -->
+          <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+          <!-- Custom JS -->
+          <script src="/js/main.js"></script>
+
+          <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              // Initialize Materialize components
+              M.AutoInit();
+
+              // Handle item card clicks
+              document.querySelectorAll('.item-card').forEach(card => {
+                card.addEventListener('click', function () {
+                  const itemId = this.dataset.itemId;
+                  const title = this.dataset.itemTitle;
+                  const description = this.dataset.itemDescription;
+                  const category = this.dataset.itemCategory;
+                  const condition = this.dataset.itemCondition;
+                  const owner = this.dataset.itemOwner;
+                  const listedDate = this.dataset.itemListed;
+                  const images = JSON.parse(this.dataset.itemImages);
+                  const ownerId = this.dataset.itemOwnerId;
+                  const currentUserId = '<%= user ? user._id : "" %>';
+
+                  // Update modal content
+                  document.querySelector('.modal-title').textContent = title;
+                  document.querySelector('.description').textContent = description;
+                  document.querySelector('.owner').textContent = owner;
+                  document.querySelector('.category').textContent = category;
+                  document.querySelector('.condition').textContent = condition;
+                  document.querySelector('.listed-date').textContent = listedDate;
+
+                  // Update images
+                  const mainImage = document.querySelector('.main-image img');
+                  const thumbnailContainer = document.querySelector('.thumbnail-container');
+
+                  mainImage.src = `/uploads/items/${images[0]}`;
+                  mainImage.alt = title;
+
+                  thumbnailContainer.innerHTML = images.map((img, index) => `
+                        <img src="/uploads/items/${img}" 
+                             alt="${title}" 
+                             class="thumbnail ${index === 0 ? 'active' : ''}"
+                             onclick="changeMainImage(this, '${img}')">
+                    `).join('');
+
+                  // Update action buttons
+                  const actionButtons = document.querySelector('.action-buttons');
+                  actionButtons.innerHTML = '';
+
+                  if (currentUserId && currentUserId !== ownerId) {
+                    actionButtons.innerHTML = `
+                            <a href="#" onclick="handleProposeTrade('${itemId}', '${title}', '${description}', '${images[0]}', '${ownerId}')" class="btn waves-effect waves-light">
+                                <i class="material-icons left">swap_horiz</i>
+                                Propose Trade
+                            </a>
+                        `;
+                  } else if (currentUserId === ownerId) {
+                    actionButtons.innerHTML = `
+                            <a href="/items/edit/${itemId}" class="btn waves-effect waves-light">
+                                <i class="material-icons left">edit</i>
+                                Edit
+                            </a>
+                            <form action="/items/${itemId}?_method=DELETE" method="POST" style="display: inline;">
+                                <button type="submit" class="btn waves-effect waves-light red">
+                                    <i class="material-icons left">delete</i>
+                                    Delete
+                                </button>
+                            </form>
+                        `;
+                  }
+
+                  // Show item modal
+                  const itemModal = document.getElementById('itemModal');
+                  itemModal.style.display = 'block';
+                  document.body.style.overflow = 'hidden';
+                });
+              });
+
+              // Close modals when clicking outside
+              window.onclick = function (event) {
+                const itemModal = document.getElementById('itemModal');
+                const tradeModal = document.getElementById('tradeProposalModal');
+
+                if (event.target === itemModal) {
+                  itemModal.style.display = 'none';
+                  document.body.style.overflow = '';
+                }
+                if (event.target === tradeModal) {
+                  tradeModal.style.display = 'none';
+                  document.body.style.overflow = '';
+                }
+              }
+
+              // Close modals when clicking close button
+              document.querySelectorAll('.modal-close').forEach(closeBtn => {
+                closeBtn.addEventListener('click', function (e) {
+                  e.preventDefault();
+                  const modal = this.closest('.modal');
+                  modal.style.display = 'none';
+                  document.body.style.overflow = '';
+                });
+              });
+            });
+
+            // Function to change main image
+            function changeMainImage(thumbnail, imagePath) {
+              const mainImage = document.querySelector('.main-image img');
+              mainImage.src = `/uploads/items/${imagePath}`;
+
+              // Update active thumbnail
+              document.querySelectorAll('.thumbnail').forEach(thumb => {
+                thumb.classList.remove('active');
+              });
+              thumbnail.classList.add('active');
+            }
+
+            // Function to handle propose trade
+            function handleProposeTrade(itemId, title, description, image, ownerId) {
+              if (!itemId) {
+                console.error('No item ID provided');
+                return;
+              }
+
+              // Close item modal
+              const itemModal = document.getElementById('itemModal');
+              itemModal.style.display = 'none';
+
+              // Open trade proposal modal
+              const tradeModal = document.getElementById('tradeProposalModal');
+
+              // Set the requested item details
+              document.getElementById('requestedItemId').value = itemId;
+              document.getElementById('receiverId').value = ownerId;
+              document.getElementById('requestedItemImage').src = `/uploads/items/${image}`;
+              document.getElementById('requestedItemTitle').textContent = title;
+              document.getElementById('requestedItemDescription').textContent = description;
+
+              // Fetch user's available items
+              fetch('/items/my/available')
+                .then(response => response.json())
+                .then(items => {
+                  const itemsContainer = document.querySelector('.items-to-offer');
+                  itemsContainer.innerHTML = items.map(item => `
+                    <div class="item-card" style="margin-bottom: 1rem;">
+                      <label style="display: flex; gap: 1rem; align-items: center; cursor: pointer;">
+                        <input type="checkbox" name="offeredItems" value="${item._id}" class="filled-in">
+                        <img src="/uploads/items/${item.images[0]}" alt="${item.title}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                        <div>
+                          <h6 style="margin: 0 0 0.25rem 0;">${item.title}</h6>
+                          <p style="margin: 0; color: #666; font-size: 0.9rem;">${item.description.substring(0, 100)}...</p>
+                        </div>
+                      </label>
+                    </div>
+                  `).join('');
+                })
+                .catch(error => {
+                  console.error('Error fetching items:', error);
+                  M.toast({ html: 'Error loading your items' });
+                });
+
+              // Show trade modal
+              tradeModal.style.display = 'block';
+              document.body.style.overflow = 'hidden';
+            }
+          </script>
 </body>
 
 </html>

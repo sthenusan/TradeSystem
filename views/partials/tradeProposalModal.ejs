@@ -1,0 +1,142 @@
+<!-- Trade Proposal Modal -->
+<div id="tradeProposalModal" class="modal"
+    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content"
+        style="background-color: #fefefe; margin: 5% auto; padding: 0; border-radius: 8px; width: 90%; max-width: 800px; position: relative;">
+        <div class="modal-header"
+            style="padding: 1rem; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+            <h4 class="modal-title" style="margin: 0; font-size: 1.5rem; font-weight: 500;">Propose Trade</h4>
+            <a href="#" class="modal-close" style="color: #666; cursor: pointer;"><i
+                    class="material-icons">close</i></a>
+        </div>
+        <div class="modal-body" style="padding: 1.5rem;">
+            <form id="tradeProposalForm" action="/trades" method="POST">
+                <input type="hidden" name="requestedItem" id="requestedItemId">
+                <input type="hidden" name="receiverId" id="receiverId">
+
+                <!-- Requested Item -->
+                <div class="row">
+                    <div class="col s12">
+                        <h5 style="margin-bottom: 1rem;">Item You Want</h5>
+                        <div class="card" style="margin-bottom: 1.5rem;">
+                            <div class="card-content">
+                                <div class="item-preview" style="display: flex; gap: 1rem; align-items: center;">
+                                    <img src="" alt="" id="requestedItemImage"
+                                        style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                                    <div>
+                                        <h6 id="requestedItemTitle" style="margin: 0 0 0.5rem 0;"></h6>
+                                        <p id="requestedItemDescription" style="margin: 0; color: #666;"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Your Items to Offer -->
+                <div class="row">
+                    <div class="col s12">
+                        <h5 style="margin-bottom: 1rem;">Your Items to Offer</h5>
+                        <div class="items-to-offer" style="max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem;">
+                            <!-- Items will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Optional Message -->
+                <div class="row">
+                    <div class="col s12">
+                        <div class="input-field">
+                            <textarea name="message" id="message" class="materialize-textarea"></textarea>
+                            <label for="message">Message to the owner (optional)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer"
+                    style="padding: 1rem; border-top: 1px solid #e0e0e0; display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn waves-effect waves-light grey"
+                        onclick="closeTradeModal()">Cancel</button>
+                    <button type="submit" class="btn waves-effect waves-light">Propose Trade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openTradeProposalModal(itemId, itemTitle, itemDescription, itemImage, ownerId) {
+        const modal = document.getElementById('tradeProposalModal');
+        const form = document.getElementById('tradeProposalForm');
+
+        // Set the requested item details
+        document.getElementById('requestedItemId').value = itemId;
+        document.getElementById('receiverId').value = ownerId;
+        document.getElementById('requestedItemImage').src = `/uploads/items/${itemImage}`;
+        document.getElementById('requestedItemTitle').textContent = itemTitle;
+        document.getElementById('requestedItemDescription').textContent = itemDescription;
+
+        // Fetch user's available items
+        fetch('/api/items/available')
+            .then(response => response.json())
+            .then(items => {
+                const itemsContainer = document.querySelector('.items-to-offer');
+                itemsContainer.innerHTML = items.map(item => `
+                    <div class="item-card" style="margin-bottom: 1rem;">
+                        <label style="display: flex; gap: 1rem; align-items: center; cursor: pointer;">
+                            <input type="checkbox" name="offeredItems" value="${item._id}" class="filled-in">
+                            <img src="/uploads/items/${item.images[0]}" alt="${item.title}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                            <div>
+                                <h6 style="margin: 0 0 0.25rem 0;">${item.title}</h6>
+                                <p style="margin: 0; color: #666; font-size: 0.9rem;">${item.description.substring(0, 100)}...</p>
+                            </div>
+                        </label>
+                    </div>
+                `).join('');
+            })
+            .catch(error => {
+                console.error('Error fetching items:', error);
+                M.toast({ html: 'Error loading your items' });
+            });
+
+        // Show modal
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeTradeModal() {
+        const modal = document.getElementById('tradeProposalModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+
+        // Reset form
+        document.getElementById('tradeProposalForm').reset();
+        document.querySelector('.items-to-offer').innerHTML = '';
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('tradeProposalModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeTradeModal();
+        }
+    });
+
+    // Close modal when clicking close button
+    document.querySelector('#tradeProposalModal .modal-close').addEventListener('click', function (e) {
+        e.preventDefault();
+        closeTradeModal();
+    });
+
+    // Form submission
+    document.getElementById('tradeProposalForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const checkedItems = document.querySelectorAll('input[name="offeredItems"]:checked');
+        if (checkedItems.length === 0) {
+            M.toast({ html: 'Please select at least one item to offer' });
+            return;
+        }
+
+        this.submit();
+    });
+</script>

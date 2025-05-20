@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Trades | Barter Trading</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .trade-card {
+            border-radius: 12px;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+
+        .trade-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .trade-status {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status-accepted {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-rejected {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .status-completed {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .status-cancelled {
+            background: #F3F4F6;
+            color: #374151;
+        }
+
+        .trade-items {
+            display: flex;
+            gap: 12px;
+            margin: 12px 0;
+        }
+
+        .item-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .trade-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            color: #6B7280;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <%- include('../partials/navbar') %>
+        <%- include('../partials/messages') %>
+
+            <main style="background: #f5f5f5; padding: 48px 0;">
+                <div class="container">
+                    <h2 class="center-align">My Trades</h2>
+
+                    <% if (trades.length===0) { %>
+                        <div class="center-align">
+                            <p>You don't have any trades yet.</p>
+                            <a href="/items" class="btn waves-effect waves-light">Browse Items</a>
+                        </div>
+                        <% } else { %>
+                            <div class="row">
+                                <% trades.forEach(trade=> { %>
+                                    <div class="col s12 m6 l4">
+                                        <div class="card">
+                                            <div class="card-content">
+                                                <span class="card-title">
+                                                    Trade with <%= trade.initiator._id.toString()===user._id.toString()
+                                                        ? trade.receiver.name : trade.initiator.name %>
+                                                </span>
+
+                                                <div class="trade-status <%= trade.status.toLowerCase() %>">
+                                                    Status: <%= trade.status %>
+                                                </div>
+
+                                                <div class="trade-items">
+                                                    <h6>You <%= trade.initiator._id.toString()===user._id.toString()
+                                                            ? 'Offered' : 'Requested' %>:</h6>
+                                                    <ul>
+                                                        <% (trade.initiator._id.toString()===user._id.toString() ?
+                                                            trade.offeredItems : trade.requestedItems).forEach(item=> {
+                                                            %>
+                                                            <li>
+                                                                <%= item.title %>
+                                                            </li>
+                                                            <% }) %>
+                                                    </ul>
+
+                                                    <h6>You <%= trade.initiator._id.toString()===user._id.toString()
+                                                            ? 'Requested' : 'Received' %>:</h6>
+                                                    <ul>
+                                                        <% (trade.initiator._id.toString()===user._id.toString() ?
+                                                            trade.requestedItems : trade.offeredItems).forEach(item=> {
+                                                            %>
+                                                            <li>
+                                                                <%= item.title %>
+                                                            </li>
+                                                            <% }) %>
+                                                    </ul>
+                                                </div>
+
+                                                <div class="trade-messages">
+                                                    <p>Last message: <%= trade.messages[trade.messages.length -
+                                                            1]?.content || 'No messages yet' %>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="card-action">
+                                                <a href="/trades/<%= trade._id %>"
+                                                    class="btn waves-effect waves-light">View Details</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% }) %>
+                            </div>
+                            <% } %>
+                </div>
+            </main>
+
+            <%- include('../partials/footer') %>
+
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        // Initialize Materialize components
+                        M.AutoInit();
+
+                        // Trade filtering functionality
+                        const searchInput = document.getElementById('search');
+                        const statusFilter = document.getElementById('status-filter');
+                        const tradesList = document.getElementById('trades-list');
+
+                        function filterTrades() {
+                            const searchTerm = searchInput.value.toLowerCase();
+                            const statusValue = statusFilter.value.toLowerCase();
+                            const tradeCards = tradesList.getElementsByClassName('trade-card');
+
+                            Array.from(tradeCards).forEach(card => {
+                                const tradeText = card.textContent.toLowerCase();
+                                const tradeStatus = card.querySelector('.trade-status').textContent.toLowerCase();
+
+                                const matchesSearch = tradeText.includes(searchTerm);
+                                const matchesStatus = !statusValue || tradeStatus === statusValue;
+
+                                card.style.display = matchesSearch && matchesStatus ? 'block' : 'none';
+                            });
+                        }
+
+                        searchInput.addEventListener('input', filterTrades);
+                        statusFilter.addEventListener('change', filterTrades);
+                    });
+                </script>
+</body>
+
+</html>
