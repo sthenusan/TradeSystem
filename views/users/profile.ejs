@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/style.css">
     <style>
@@ -19,27 +21,43 @@
         .profile-header {
             margin-bottom: 30px;
         }
+        .user-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
         .photo-upload {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: 12px;
         }
         .photo-placeholder {
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            background-color: #f5f5f5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .photo-placeholder img {
             width: 100%;
             height: 100%;
-            border-radius: 50%;
             object-fit: cover;
+        }
+        .user-info {
+            flex: 1;
+        }
+        .user-info h2 {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .form-row {
             display: flex;
@@ -117,6 +135,92 @@
             color: #666;
             font-size: 14px;
         }
+        .verified-badge {
+            color: #4CAF50;
+            margin-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.9em;
+            background-color: #E8F5E9;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        .verified-badge i {
+            font-size: 1.1em;
+        }
+        .verified-text {
+            font-weight: 500;
+        }
+        .unverified-text {
+            color: #666;
+            font-size: 0.9em;
+            margin-left: 5px;
+        }
+        .btn-verify {
+            background-color: #1DA1F2;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-verify:hover {
+            background-color: #1991db;
+        }
+        .verify-form {
+            display: inline;
+        }
+        .modal {
+            max-width: 400px;
+            border-radius: 8px;
+        }
+        
+        .verification-code-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 24px 0;
+        }
+        
+        .code-input {
+            width: 40px;
+            height: 48px;
+            text-align: center;
+            font-size: 24px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            margin: 0;
+        }
+        
+        .code-input:focus {
+            border-color: #4CAF50;
+            box-shadow: none;
+        }
+        
+        .message {
+            text-align: center;
+            margin: 16px 0;
+            font-weight: 500;
+        }
+        
+        .message.error {
+            color: #f44336;
+        }
+        
+        .message.success {
+            color: #4CAF50;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px;
+        }
     </style>
 </head>
 <body>
@@ -156,23 +260,38 @@
         </div>
 
         <form action="/users/profile" method="POST" enctype="multipart/form-data">
-            <!-- Profile Picture Section -->
-            <div class="photo-upload">
-                <div class="photo-placeholder">
-                    <% if (user.profilePicture) { %>
-                        <img src="/uploads/profiles/<%= user.profilePicture %>" alt="Profile Picture">
-                    <% } else { %>
-                        <i class="material-icons" style="font-size: 48px; color: #999;">account_circle</i>
-                    <% } %>
+            <div class="user-header">
+                <div class="photo-upload">
+                    <div class="photo-placeholder">
+                        <img src="/uploads/profiles/<%= user.profilePicture %>" alt="Profile Picture" class="profile-picture">
+                    </div>
+                    <div>
+                        <input type="file" name="profilePicture" id="profilePicture" hidden accept="image/*">
+                        <label for="profilePicture" class="btn-change">
+                            <i class="material-icons">photo_camera</i>
+                            Change Photo
+                        </label>
+                        <p class="grey-text" style="margin-top: 8px; font-size: 0.875rem;">
+                            JPG, GIF or PNG. Max size of 1MB.
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <input type="file" name="profilePicture" id="profilePicture" hidden accept="image/*">
-                    <label for="profilePicture" class="btn-change">
-                        <i class="material-icons">photo_camera</i>
-                        Change Photo
-                    </label>
-                    <p class="grey-text" style="margin-top: 8px; font-size: 0.875rem;">
-                        JPG, GIF or PNG. Max size of 1MB.
+                <div class="user-info">
+                    <h2>
+                        <%= user.firstName %> <%= user.lastName %>
+                        <% if (user.isEmailVerified) { %>
+                            <span class="verified-badge" title="Email Verified">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="verified-text">Verified</span>
+                            </span>
+                        <% } %>
+                    </h2>
+                    <p class="email">
+                        <%= user.email %>
+                        <% if (!user.isEmailVerified) { %>
+                            <span class="unverified-text">(Unverified)</span>
+                            <button type="button" class="btn-verify" onclick="requestVerification()">Verify Email</button>
+                        <% } %>
                     </p>
                 </div>
             </div>
@@ -281,6 +400,8 @@
             // Initialize Materialize components
             M.updateTextFields();
             M.textareaAutoResize(document.querySelector('textarea'));
+            const verificationModal = document.getElementById('verificationModal');
+            M.Modal.init(verificationModal);
 
             // Preview profile picture
             document.getElementById('profilePicture').addEventListener('change', function(e) {
@@ -292,6 +413,28 @@
                     };
                     reader.readAsDataURL(e.target.files[0]);
                 }
+            });
+
+            // Handle verification code input
+            const codeInputs = document.querySelectorAll('.code-input');
+            codeInputs.forEach(input => {
+                input.addEventListener('input', (e) => {
+                    if (e.target.value) {
+                        const nextIndex = parseInt(e.target.dataset.index) + 1;
+                        if (nextIndex < 6) {
+                            codeInputs[nextIndex].focus();
+                        }
+                    }
+                });
+                
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value) {
+                        const prevIndex = parseInt(e.target.dataset.index) - 1;
+                        if (prevIndex >= 0) {
+                            codeInputs[prevIndex].focus();
+                        }
+                    }
+                });
             });
         });
 
@@ -313,6 +456,100 @@
         function confirmDelete() {
             return confirm('Are you sure you want to delete your account? This action cannot be undone.');
         }
+
+        // Send verification email and show modal
+        async function requestVerification() {
+            try {
+                const response = await fetch('/users/send-verification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const modal = M.Modal.getInstance(document.getElementById('verificationModal'));
+                    modal.open();
+                    document.getElementById('verificationMessage').textContent = data.message;
+                    document.getElementById('verificationMessage').className = 'message success';
+                    // Clear any existing code inputs
+                    document.querySelectorAll('.code-input').forEach(input => input.value = '');
+                    // Focus on first input
+                    document.querySelector('.code-input').focus();
+                } else {
+                    M.toast({html: data.message, classes: 'red'});
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                M.toast({html: 'Error sending verification code', classes: 'red'});
+            }
+        }
+
+        // Verify the code
+        async function verifyCode() {
+            const codeInputs = document.querySelectorAll('.code-input');
+            const code = Array.from(codeInputs).map(input => input.value).join('');
+            if (code.length !== 6) {
+                document.getElementById('verificationMessage').textContent = 'Please enter all 6 digits';
+                document.getElementById('verificationMessage').className = 'message error';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/users/verify-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code })
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    document.getElementById('verificationMessage').textContent = data.message;
+                    document.getElementById('verificationMessage').className = 'message success';
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    document.getElementById('verificationMessage').textContent = data.message;
+                    document.getElementById('verificationMessage').className = 'message error';
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('verificationMessage').textContent = 'Error verifying code';
+                document.getElementById('verificationMessage').className = 'message error';
+            }
+        }
+        
+        // Resend verification code
+        async function resendCode() {
+            const codeInputs = document.querySelectorAll('.code-input');
+            codeInputs.forEach(input => input.value = '');
+            await requestVerification();
+        }
     </script>
+
+    <!-- Verification Modal -->
+    <div id="verificationModal" class="modal">
+        <div class="modal-content">
+            <h4>Email Verification</h4>
+            <p>Please enter the 6-digit code sent to your email.</p>
+            <div class="verification-code-container">
+                <input type="text" maxlength="1" class="code-input" data-index="0">
+                <input type="text" maxlength="1" class="code-input" data-index="1">
+                <input type="text" maxlength="1" class="code-input" data-index="2">
+                <input type="text" maxlength="1" class="code-input" data-index="3">
+                <input type="text" maxlength="1" class="code-input" data-index="4">
+                <input type="text" maxlength="1" class="code-input" data-index="5">
+            </div>
+            <p id="verificationMessage" class="message"></p>
+            <div class="modal-footer">
+                <button class="btn-flat waves-effect" onclick="resendCode()">Resend Code</button>
+                <button class="btn waves-effect waves-light green" onclick="verifyCode()">Verify</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html> 
