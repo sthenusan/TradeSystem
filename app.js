@@ -1,11 +1,19 @@
 require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const path = require('path');
 const passport = require('passport');
 const flash = require('connect-flash');
 const connectDB = require('./config/db');
+const methodOverride = require('method-override');
+const LocalStrategy = require('passport-local').Strategy;
+const User = require('./models/User');
+const Item = require('./models/Item');
+const Trade = require('./models/Trade');
+const Activity = require('./models/Activity');
+const Rating = require('./models/Rating');
 
 // Initialize express app
 const app = express();
@@ -19,6 +27,7 @@ if (process.env.NODE_ENV !== 'test') {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(methodOverride('_method'));
 
 // Create uploads directory if it doesn't exist
 const uploadDir = path.join(__dirname, 'public', 'uploads', 'profiles');
@@ -48,7 +57,6 @@ app.use(session({
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
-require('./config/passport')(passport);
 
 // Flash messages
 app.use(flash());
@@ -63,11 +71,44 @@ app.use((req, res, next) => {
     next();
 });
 
+// Passport configuration
+passport.use(new LocalStrategy({ usernameField: 'email' },
+    async (email, password, done) => {
+        try {
+            const user = await User.findOne({ email: email });
+            if (!user) {
+                return done(null, false, { message: 'Incorrect email.' });
+            }
+            const isMatch = await user.comparePassword(password);
+            if (!isMatch) {
+                return done(null, false, { message: 'Incorrect password.' });
+            }
+            return done(null, user);
+        } catch (err) {
+            return done(err);
+        }
+    }
+));
+
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (err) {
+        done(err, null);
+    }
+});
+
 // Routes
 app.use('/', require('./routes/index'));
 app.use('/users', require('./routes/userRoutes'));
 app.use('/items', require('./routes/itemRoutes'));
 app.use('/trades', require('./routes/tradeRoutes'));
+app.use('/ratings', require('./routes/ratingRoutes'));
 
 // 404 handler
 app.use((req, res, next) => {
@@ -102,3 +143,5 @@ process.on('unhandledRejection', (err) => {
         process.exit(1);
     });
 }); 
+
+module.exports = app; 
