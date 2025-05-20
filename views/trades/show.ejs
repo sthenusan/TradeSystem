@@ -11,47 +11,64 @@
     <style>
         .trade-status {
             padding: 5px 10px;
-            border-radius: 4px;
+            border-radius: 16px;
             margin: 10px 0;
             font-weight: bold;
+            display: inline-block;
         }
 
-        .trade-status.pending {
-            background-color: #fff3cd;
-            color: #856404;
+        .status-pending {
+            background: #FEF3C7;
+            color: #92400E;
         }
 
-        .trade-status.accepted {
-            background-color: #d4edda;
-            color: #155724;
+        .status-accepted {
+            background: #D1FAE5;
+            color: #065F46;
         }
 
-        .trade-status.rejected {
-            background-color: #f8d7da;
-            color: #721c24;
+        .status-rejected {
+            background: #FEE2E2;
+            color: #991B1B;
         }
 
-        .trade-status.completed {
-            background-color: #cce5ff;
-            color: #004085;
+        .status-completed {
+            background: #DBEAFE;
+            color: #1E40AF;
         }
 
-        .trade-status.cancelled {
-            background-color: #e2e3e5;
-            color: #383d41;
+        .status-cancelled {
+            background: #F3F4F6;
+            color: #374151;
         }
 
         .item-card {
             margin: 10px 0;
             padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 8px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            background: #fff;
         }
 
         .item-card img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .item-info h6 {
+            margin: 0 0 6px 0;
+            font-size: 1.1rem;
+        }
+
+        .item-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.95rem;
         }
 
         .trade-actions {
@@ -75,6 +92,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             margin-bottom: 20px;
+            background: #fafafa;
         }
 
         .message {
@@ -118,126 +136,117 @@
 
             <main style="background: #f5f5f5; padding: 48px 0;">
                 <div class="container">
-                    <div class="row">
-                        <div class="col s12">
-                            <div class="card">
-                                <div class="card-content">
-                                    <span class="card-title">
-                                        Trade with <%= trade.initiator._id.toString()===user._id.toString() ?
-                                            trade.receiver.name : trade.initiator.name %>
-                                    </span>
+                    <div class="card" style="border-radius: 12px;">
+                        <div class="card-content">
+                            <span class="card-title">
+                                Trade with <%= trade.initiator._id.toString()===user._id.toString() ?
+                                    trade.receiver.name : trade.initiator.name %>
+                            </span>
 
-                                    <div class="trade-status <%= trade.status.toLowerCase() %>">
-                                        Status: <%= trade.status %>
-                                    </div>
+                            <div class="trade-status status-<%= trade.status.toLowerCase() %>">
+                                Status: <%= trade.status %>
+                            </div>
 
-                                    <div class="row">
-                                        <div class="col s12 m6">
-                                            <div class="card">
-                                                <div class="card-content">
-                                                    <span class="card-title">
-                                                        <%= trade.initiator._id.toString()===user._id.toString()
-                                                            ? 'You Offered' : 'You Received' %>
-                                                    </span>
-                                                    <% (trade.initiator._id.toString()===user._id.toString() ?
-                                                        trade.offeredItems : trade.requestedItems).forEach(item=> { %>
-                                                        <div class="item-card">
-                                                            <img src="<%= item.images[0] %>" alt="<%= item.title %>">
-                                                            <h6>
-                                                                <%= item.title %>
-                                                            </h6>
-                                                            <p>
-                                                                <%= item.description %>
-                                                            </p>
-                                                        </div>
-                                                        <% }) %>
-                                                </div>
+                            <div class="row">
+                                <div class="col s12 m6">
+                                    <h6 style="font-weight:600;">You <%=
+                                            trade.initiator._id.toString()===user._id.toString() ? 'Offered'
+                                            : 'Received' %>:</h6>
+                                    <% (trade.initiator._id.toString()===user._id.toString() ? trade.offeredItems :
+                                        trade.requestedItems).forEach(item=> { %>
+                                        <div class="item-card">
+                                            <img src="/uploads/items/<%= item.images[0] %>" alt="<%= item.title %>">
+                                            <div class="item-info">
+                                                <h6>
+                                                    <%= item.title %>
+                                                </h6>
+                                                <p>
+                                                    <%= item.description %>
+                                                </p>
                                             </div>
                                         </div>
+                                        <% }) %>
+                                </div>
 
-                                        <div class="col s12 m6">
-                                            <div class="card">
-                                                <div class="card-content">
-                                                    <span class="card-title">
-                                                        <%= trade.initiator._id.toString()===user._id.toString()
-                                                            ? 'You Requested' : 'You Offered' %>
-                                                    </span>
-                                                    <% (trade.initiator._id.toString()===user._id.toString() ?
-                                                        trade.requestedItems : trade.offeredItems).forEach(item=> { %>
-                                                        <div class="item-card">
-                                                            <img src="<%= item.images[0] %>" alt="<%= item.title %>">
-                                                            <h6>
-                                                                <%= item.title %>
-                                                            </h6>
-                                                            <p>
-                                                                <%= item.description %>
-                                                            </p>
-                                                        </div>
-                                                        <% }) %>
-                                                </div>
+                                <div class="col s12 m6">
+                                    <h6 style="font-weight:600;">You <%=
+                                            trade.initiator._id.toString()===user._id.toString() ? 'Requested'
+                                            : 'Offered' %>:</h6>
+                                    <% (trade.initiator._id.toString()===user._id.toString() ? trade.requestedItems :
+                                        trade.offeredItems).forEach(item=> { %>
+                                        <div class="item-card">
+                                            <img src="/uploads/items/<%= item.images[0] %>" alt="<%= item.title %>">
+                                            <div class="item-info">
+                                                <h6>
+                                                    <%= item.title %>
+                                                </h6>
+                                                <p>
+                                                    <%= item.description %>
+                                                </p>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <!-- Trade Actions -->
-                                    <% if (trade.status==='Pending' &&
-                                        trade.receiver._id.toString()===user._id.toString()) { %>
-                                        <div class="trade-actions">
-                                            <form action="/trades/<%= trade._id %>/status" method="POST"
-                                                class="inline-form">
-                                                <input type="hidden" name="status" value="Accepted">
-                                                <button type="submit" class="btn waves-effect waves-light green">Accept
-                                                    Trade</button>
-                                            </form>
-                                            <form action="/trades/<%= trade._id %>/status" method="POST"
-                                                class="inline-form">
-                                                <input type="hidden" name="status" value="Rejected">
-                                                <button type="submit" class="btn waves-effect waves-light red">Reject
-                                                    Trade</button>
-                                            </form>
-                                        </div>
-                                        <% } else if (trade.status==='Accepted' ) { %>
-                                            <div class="trade-actions">
-                                                <form action="/trades/<%= trade._id %>/status" method="POST"
-                                                    class="inline-form">
-                                                    <input type="hidden" name="status" value="Completed">
-                                                    <button type="submit" class="btn waves-effect waves-light">Complete
-                                                        Trade</button>
-                                                </form>
-                                            </div>
-                                            <% } %>
-
-                                                <!-- Messages -->
-                                                <div class="messages-section">
-                                                    <h5>Messages</h5>
-                                                    <div class="messages-container">
-                                                        <% trade.messages.forEach(message=> { %>
-                                                            <div
-                                                                class="message <%= message.sender.toString() === user._id.toString() ? 'sent' : 'received' %>">
-                                                                <div class="message-content">
-                                                                    <%= message.content %>
-                                                                </div>
-                                                                <div class="message-meta">
-                                                                    <%= new Date(message.timestamp).toLocaleString() %>
-                                                                </div>
-                                                            </div>
-                                                            <% }) %>
-                                                    </div>
-
-                                                    <!-- Send Message Form -->
-                                                    <form action="/trades/<%= trade._id %>/messages" method="POST"
-                                                        class="message-form">
-                                                        <div class="input-field">
-                                                            <textarea name="content" id="message"
-                                                                class="materialize-textarea" required></textarea>
-                                                            <label for="message">Type your message...</label>
-                                                        </div>
-                                                        <button type="submit" class="btn waves-effect waves-light">Send
-                                                            Message</button>
-                                                    </form>
-                                                </div>
+                                        <% }) %>
                                 </div>
                             </div>
+
+                            <!-- Trade Actions -->
+                            <% if (trade.status==='Pending' && trade.receiver._id.toString()===user._id.toString()) { %>
+                                <div class="trade-actions">
+                                    <form action="/trades/<%= trade._id %>/status" method="POST" class="inline-form">
+                                        <input type="hidden" name="status" value="Accepted">
+                                        <button type="submit" class="btn waves-effect waves-light green">Accept
+                                            Trade</button>
+                                    </form>
+                                    <form action="/trades/<%= trade._id %>/status" method="POST" class="inline-form">
+                                        <input type="hidden" name="status" value="Rejected">
+                                        <button type="submit" class="btn waves-effect waves-light red">Reject
+                                            Trade</button>
+                                    </form>
+                                </div>
+                                <% } else if (trade.status==='Accepted' &&
+                                    (trade.initiator._id.toString()===user._id.toString() ||
+                                    trade.receiver._id.toString()===user._id.toString())) { %>
+                                    <div class="trade-actions">
+                                        <form action="/trades/<%= trade._id %>/complete" method="POST"
+                                            class="inline-form">
+                                            <button type="submit" class="btn waves-effect waves-light blue">Mark as
+                                                Completed</button>
+                                        </form>
+                                    </div>
+                                    <% } %>
+
+                                        <!-- Messages Section -->
+                                        <div class="messages-section">
+                                            <h5>Messages</h5>
+                                            <div class="messages-container">
+                                                <% trade.messages.forEach(msg=> { %>
+                                                    <div
+                                                        class="message <%= msg.sender.toString() === user._id.toString() ? 'sent' : 'received' %>">
+                                                        <div class="message-content">
+                                                            <%= msg.content %>
+                                                        </div>
+                                                        <div class="message-meta">
+                                                            <%= msg.sender.toString()===user._id.toString() ? 'You' :
+                                                                (msg.senderName || 'Other' ) %> -
+                                                                <%= msg.createdAt ? new
+                                                                    Date(msg.createdAt).toLocaleString() :
+                                                                    (msg.timestamp ? new
+                                                                    Date(msg.timestamp).toLocaleString() : 'Unknown' )
+                                                                    %>
+                                                        </div>
+                                                    </div>
+                                                    <% }) %>
+                                            </div>
+                                            <form action="/trades/<%= trade._id %>/messages" method="POST"
+                                                class="message-form">
+                                                <div class="input-field">
+                                                    <textarea name="content" class="materialize-textarea"
+                                                        required></textarea>
+                                                    <label for="content">Send a message</label>
+                                                </div>
+                                                <button type="submit" class="btn waves-effect waves-light">Send</button>
+                                            </form>
+                                        </div>
                         </div>
                     </div>
                 </div>
@@ -245,102 +254,12 @@
 
             <%- include('../partials/footer') %>
 
-                <!-- Include the rating modal -->
-                <%- include('../partials/ratingModal') %>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        M.AutoInit();
+                    });
+                </script>
+</body>
 
-                    <script
-                        src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            // Initialize Materialize components
-                            M.AutoInit();
-
-                            // Scroll to bottom of messages
-                            const messageList = document.getElementById('message-list');
-                            messageList.scrollTop = messageList.scrollHeight;
-
-                            // Handle message sending
-                            const messageForm = document.getElementById('message-form');
-                            const messageInput = document.getElementById('message-input');
-
-                            messageForm.addEventListener('submit', function (e) {
-                                e.preventDefault();
-                                const content = messageInput.value.trim();
-
-                                if (content) {
-                                    fetch(`/trades/<%= trade._id %>/messages`, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json'
-                                        },
-                                        body: JSON.stringify({ content })
-                                    })
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            if (data.success) {
-                                                messageInput.value = '';
-                                                // Add new message to the list
-                                                const messageElement = document.createElement('div');
-                                                messageElement.className = 'message sent';
-                                                messageElement.innerHTML = `
-                                <div class="message-content">${content}</div>
-                                <div class="message-meta">
-                                    You • ${new Date().toLocaleString()}
-                                </div>
-                            `;
-                                                messageList.appendChild(messageElement);
-                                                messageList.scrollTop = messageList.scrollHeight;
-                                            } else {
-                                                M.toast({ html: data.message || 'Error sending message' });
-                                            }
-                                        })
-                                        .catch(error => {
-                                            console.error('Error:', error);
-                                            M.toast({ html: 'Error sending message' });
-                                        });
-                                }
-                            });
-
-                            // Initialize rating modal
-                            const ratingModal = M.Modal.init(document.getElementById('ratingModal'), {
-                                dismissible: false,
-                                opacity: 0.5,
-                                inDuration: 300,
-                                outDuration: 200
-                            });
-
-                            // Handle trade completion
-                            const completeTradeBtn = document.getElementById('completeTradeBtn');
-                            if (completeTradeBtn) {
-                                completeTradeBtn.addEventListener('click', async function () {
-                                    const tradeId = this.dataset.tradeId;
-
-                                    try {
-                                        const response = await fetch(`/trades/${tradeId}/complete`, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            }
-                                        });
-
-                                        const data = await response.json();
-
-                                        if (response.ok) {
-                                            // Show rating modal
-                                            document.getElementById('tradeId').value = tradeId;
-                                            document.getElementById('toUserId').value = data.otherUserId;
-                                            ratingModal.open();
-                                        } else {
-                                            M.toast({ html: data.error || 'Error completing trade' });
-                                        }
-                                    } catch (error) {
-                                        console.error('Error:', error);
-                                        M.toast({ html: 'Error completing trade' });
-                                    }
-                                });
-                            }
-                        });
-
-                        // Handle trade status updates
-                        function updateTradeStatus(tradeId, status) {
-                            if (confirm(`
+</html>

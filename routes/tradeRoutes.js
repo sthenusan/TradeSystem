@@ -5,6 +5,9 @@ const Trade = require('../models/Trade');
 const Item = require('../models/Item');
 const Activity = require('../models/Activity');
 const User = require('../models/User');
+const multer = require('multer');
+const upload = multer();
+const mongoose = require('mongoose');
 
 // Get all trades for the logged-in user
 router.get('/', ensureAuthenticated, async (req, res) => {
@@ -36,54 +39,23 @@ router.get('/', ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Get trade creation form
-router.get('/create', ensureAuthenticated, async (req, res) => {
-    try {
-        const itemId = req.query.item;
-        if (!itemId) {
-            return res.status(400).render('error', {
-                title: 'Error',
-                msg: 'No item specified for trade',
-                error: new Error('No item specified')
-            });
-        }
-
-        const requestedItem = await Item.findById(itemId).populate('owner', 'firstName lastName');
-        if (!requestedItem) {
-            return res.status(404).render('error', {
-                title: 'Error',
-                msg: 'Item not found',
-                error: new Error('Item not found')
-            });
-        }
-
-        // Get user's available items for trade
-        const userItems = await Item.find({
-            owner: req.user._id,
-            status: 'Available'
-        });
-
-        res.render('trades/create', {
-            title: 'Create Trade',
-            requestedItem: requestedItem,
-            userItems: userItems,
-            user: req.user
-        });
-    } catch (error) {
-        console.error('Error loading trade form:', error);
-        res.status(500).render('error', {
-            title: 'Error',
-            msg: 'Failed to load trade form',
-            error: error
-        });
-    }
-});
-
 // Create trade
-router.post('/', ensureAuthenticated, async (req, res) => {
+router.post('/', ensureAuthenticated, upload.none(), async (req, res) => {
     try {
-        const { requestedItem, offeredItems, message } = req.body;
-        
+        let { requestedItem, offeredItems, message } = req.body;
+        // Always treat offeredItems as an array
+        if (!Array.isArray(offeredItems)) {
+            offeredItems = offeredItems ? [offeredItems] : [];
+        }
+        // Debug log
+        console.log('BODY:', req.body);
+        if (!mongoose.Types.ObjectId.isValid(requestedItem)) {
+            return res.status(400).json({ success: false, message: 'Invalid requestedItem ObjectId', requestedItem });
+        }
+        if (offeredItems.some(id => !mongoose.Types.ObjectId.isValid(id))) {
+            return res.status(400).json({ success: false, message: 'Invalid offeredItems ObjectId', offeredItems });
+        }
+
         if (!requestedItem) {
             return res.status(400).render('error', {
                 title: 'Error',
@@ -150,8 +122,13 @@ router.post('/', ensureAuthenticated, async (req, res) => {
             relatedTrade: trade._id
         });
 
-        req.flash('success_msg', 'Trade proposal sent successfully');
-        res.redirect('/trades');
+        // Respond with JSON for AJAX, or redirect for normal form
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.json({ success: true, message: 'Trade proposal sent successfully', tradeId: trade._id });
+        } else {
+            req.flash('success_msg', 'Trade proposal sent successfully');
+            return res.redirect('/trades');
+        }
     } catch (error) {
         console.error('Error creating trade:', error);
         res.status(500).render('error', {
@@ -312,12 +289,14 @@ router.post('/:id/complete', ensureAuthenticated, async (req, res) => {
             .populate('receiver', 'firstName lastName');
         
         if (!trade) {
-            return res.status(404).json({ error: 'Trade not found' });
+            return res.status(404).render('error', { error: 'Trade not found' });
         }
         
-        // Check if user is part of the trade
-        if (![trade.initiator.toString(), trade.receiver.toString()].includes(req.user._id.toString())) {
-            return res.status(403).json({ error: 'Not authorized' });
+        // Robust check if user is part of the trade
+        const initiatorId = trade.initiator._id ? trade.initiator._id.toString() : trade.initiator.toString();
+        const receiverId = trade.receiver._id ? trade.receiver._id.toString() : trade.receiver.toString();
+        if (![initiatorId, receiverId].includes(req.user._id.toString())) {
+            return res.status(403).render('error', { error: 'Not authorized' });
         }
         
         // Update trade status
@@ -336,23 +315,11 @@ router.post('/:id/complete', ensureAuthenticated, async (req, res) => {
             { $inc: { totalTrades: 1 } }
         );
         
-        // Get the other user's information for rating
-        const otherUser = trade.initiator.toString() === req.user._id.toString() 
-            ? trade.receiver 
-            : trade.initiator;
-            
-        res.json({ 
-            success: true, 
-            message: 'Trade completed successfully',
-            ratingInfo: {
-                otherUserId: otherUser._id,
-                otherUserName: `${otherUser.firstName} ${otherUser.lastName}`,
-                tradeId: trade._id
-            }
-        });
+        // Redirect to the items page after completion
+        res.redirect('/items');
     } catch (error) {
         console.error('Error completing trade:', error);
-        res.status(500).json({ error: 'Error completing trade' });
+        res.status(500).render('error', { error: 'Error completing trade' });
     }
 });
 

@@ -252,9 +252,6 @@
                           <p><strong>Condition:</strong>
                             <%= item.condition %>
                           </p>
-                          <p><strong>Owner:</strong>
-                            <%= item.owner.firstName + ' ' + item.owner.lastName %>
-                          </p>
                           <p><strong>Listed:</strong>
                             <%= new Date(item.createdAt).toLocaleDateString() %>
                           </p>
@@ -423,24 +420,20 @@
 
               // Fetch user's available items
               fetch('/items/my/available')
-                .then(response => response.json())
+                .then(response => {
+                  if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                  }
+                  return response.json();
+                })
                 .then(items => {
-                  const itemsContainer = document.querySelector('.items-to-offer');
-                  itemsContainer.innerHTML = items.map(item => `
-                    <div class="item-card" style="margin-bottom: 1rem;">
-                      <label style="display: flex; gap: 1rem; align-items: center; cursor: pointer;">
-                        <input type="checkbox" name="offeredItems" value="${item._id}" class="filled-in">
-                        <img src="/uploads/items/${item.images[0]}" alt="${item.title}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
-                        <div>
-                          <h6 style="margin: 0 0 0.25rem 0;">${item.title}</h6>
-                          <p style="margin: 0; color: #666; font-size: 0.9rem;">${item.description.substring(0, 100)}...</p>
-                        </div>
-                      </label>
-                    </div>
-                  `).join('');
+                  console.log('Fetched items:', items); // Debug log
+                  updateItemsContainer(items);
                 })
                 .catch(error => {
                   console.error('Error fetching items:', error);
+                  const itemsContainer = document.querySelector('.items-to-offer');
+                  itemsContainer.innerHTML = '<p class="center-align red-text">Error loading your items. Please try again.</p>';
                   M.toast({ html: 'Error loading your items' });
                 });
 

@@ -42,7 +42,7 @@ async function getItemService(itemId) {
 }
 
 // Create new item
-async function createItemService({ title, description, category, condition, location, images, owner }) {
+async function createItemService({ title, description, category, condition, location, images, owner, status = 'Available' }) {
     const newItem = new Item({
         title,
         description,
@@ -50,7 +50,8 @@ async function createItemService({ title, description, category, condition, loca
         condition,
         location,
         images,
-        owner
+        owner,
+        status
     });
     await newItem.save();
     return newItem;
