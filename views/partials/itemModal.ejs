@@ -1,0 +1,196 @@
+<!-- Item Details Modal -->
+<div id="itemModal" class="modal"
+    style="display: none; position: fixed; z-index: 1050; left: 50%; top: 50%; width: 95vw; max-width: 900px; min-height: 500px; transform: translate(-50%, -50%); background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.25); border-radius: 12px;">
+    <div class="modal-content"
+        style="background-color: #fefefe; padding: 0; border-radius: 8px; width: 100%; position: relative;">
+        <div class="modal-header"
+            style="padding: 1rem; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+            <h4 class="modal-title" style="margin: 0; font-size: 1.5rem; font-weight: 500;"></h4>
+            <a href="#" class="modal-close" style="color: #666; cursor: pointer;"><i
+                    class="material-icons">close</i></a>
+        </div>
+        <div class="modal-body" style="padding: 1.5rem;">
+            <div class="row">
+                <!-- Item Images -->
+                <div class="col s12 m6">
+                    <div class="item-images">
+                        <div class="main-image"
+                            style="width: 100%; height: 300px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; border-radius: 8px; overflow: hidden;">
+                            <img src="" alt="" class="responsive-img"
+                                style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        <div class="thumbnail-container"
+                            style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem;"></div>
+                    </div>
+                </div>
+                <!-- Item Details -->
+                <div class="col s12 m6">
+                    <div class="item-details" style="height: 100%; display: flex; flex-direction: column;">
+                        <p class="description" style="font-size: 1.1rem; margin-bottom: 1.5rem; color: #333;"></p>
+                        <div class="item-meta" style="margin-top: auto;">
+                            <p style="margin: 0.5rem 0; color: #666;"><strong>Owner:</strong> <span
+                                    class="owner"></span></p>
+                            <p style="margin: 0.5rem 0; color: #666;"><strong>Category:</strong> <span
+                                    class="category"></span></p>
+                            <p style="margin: 0.5rem 0; color: #666;"><strong>Condition:</strong> <span
+                                    class="condition"></span></p>
+                            <p style="margin: 0.5rem 0; color: #666;"><strong>Listed:</strong> <span
+                                    class="listed-date"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer"
+            style="padding: 1rem; border-top: 1px solid #e0e0e0; display: flex; justify-content: flex-end; gap: 1rem;">
+            <div class="action-buttons" style="display: flex; gap: 0.5rem;">
+                <!-- Buttons will be dynamically added based on user and item ownership -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('itemModal');
+        const modalContent = modal.querySelector('.modal-content');
+        const closeBtn = modal.querySelector('.modal-close');
+
+        // Handle item card clicks
+        document.querySelectorAll('.item-card').forEach(card => {
+            card.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const itemId = this.dataset.itemId;
+                const title = this.dataset.itemTitle;
+                const description = this.dataset.itemDescription;
+                const category = this.dataset.itemCategory;
+                const condition = this.dataset.itemCondition;
+                const owner = this.dataset.itemOwner;
+                const listedDate = this.dataset.itemListed;
+                const images = JSON.parse(this.dataset.itemImages || '[]');
+                const ownerId = this.dataset.itemOwnerId;
+                const currentUserId = '<%= user ? user._id : "" %>';
+
+                // Update modal content
+                document.querySelector('.modal-title').textContent = title;
+                document.querySelector('.description').textContent = description;
+                document.querySelector('.owner').textContent = owner;
+                document.querySelector('.category').textContent = category;
+                document.querySelector('.condition').textContent = condition;
+                document.querySelector('.listed-date').textContent = listedDate;
+
+                // Update images
+                const mainImage = document.querySelector('.main-image img');
+                const thumbnailContainer = document.querySelector('.thumbnail-container');
+
+                if (images && images.length > 0) {
+                    mainImage.src = `/uploads/items/${images[0]}`;
+                    mainImage.alt = title;
+
+                    thumbnailContainer.innerHTML = images.map((img, index) => `
+                        <img src="/uploads/items/${img}" 
+                             alt="${title}" 
+                             class="thumbnail ${index === 0 ? 'active' : ''}"
+                             onclick="changeMainImage(this, '${img}')"
+                             style="width: 60px; height: 60px; border-radius: 4px; cursor: pointer; border: 2px solid transparent;">
+                    `).join('');
+                } else {
+                    mainImage.src = '/images/no-image.png';
+                    mainImage.alt = 'No image available';
+                    thumbnailContainer.innerHTML = '';
+                }
+
+                // Update action buttons
+                const actionButtons = document.querySelector('.action-buttons');
+                actionButtons.innerHTML = '';
+
+                if (currentUserId && currentUserId !== ownerId) {
+                    actionButtons.innerHTML = `
+                        <a href="#" onclick="handleProposeTrade('${itemId}', '${title}', '${description}', '${images[0]}', '${ownerId}')" class="btn waves-effect waves-light">
+                            <i class="material-icons left">swap_horiz</i>
+                            Propose Trade
+                        </a>
+                    `;
+                } else if (currentUserId === ownerId) {
+                    actionButtons.innerHTML = `
+                        <a href="/items/edit/${itemId}" class="btn waves-effect waves-light">
+                            <i class="material-icons left">edit</i>
+                            Edit
+                        </a>
+                        <form action="/items/${itemId}?_method=DELETE" method="POST" style="display: inline;">
+                            <button type="submit" class="btn waves-effect waves-light red">
+                                <i class="material-icons left">delete</i>
+                                Delete
+                            </button>
+                        </form>
+                    `;
+                }
+
+                // Show modal
+                modal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        // Close modal when clicking the close button
+        closeBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeModal();
+        });
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Close modal when pressing Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.style.display === 'block') {
+                closeModal();
+            }
+        });
+
+        function closeModal() {
+            // Clear modal content
+            document.querySelector('.modal-title').textContent = '';
+            document.querySelector('.description').textContent = '';
+            document.querySelector('.owner').textContent = '';
+            document.querySelector('.category').textContent = '';
+            document.querySelector('.condition').textContent = '';
+            document.querySelector('.listed-date').textContent = '';
+            document.querySelector('.main-image img').src = '';
+            document.querySelector('.thumbnail-container').innerHTML = '';
+            document.querySelector('.action-buttons').innerHTML = '';
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
+
+    // Function to handle propose trade
+    function handleProposeTrade(itemId, title, description, image, ownerId) {
+        if (!itemId) {
+            console.error('No item ID provided');
+            return;
+        }
+        const modal = document.getElementById('itemModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        openTradeProposalModal(itemId, title, description, image, ownerId);
+    }
+
+    // Function to change main image
+    function changeMainImage(thumbnail, imagePath) {
+        const mainImage = document.querySelector('.main-image img');
+        mainImage.src = `/uploads/items/${imagePath}`;
+
+        // Update active thumbnail
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        thumbnail.classList.add('active');
+    }
+</script>

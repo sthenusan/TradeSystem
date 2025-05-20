@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { ensureAuthenticated } = require('../middleware/auth');
+const Activity = require('../models/Activity');
 
 // Home page
 router.get('/', (req, res) => {
@@ -11,12 +12,34 @@ router.get('/', (req, res) => {
 });
 
 // Dashboard
-router.get('/dashboard', ensureAuthenticated, (req, res) => {
+router.get('/dashboard', ensureAuthenticated, async (req, res) => {
+    try {
+        const recentActivity = await Activity.find({ user: req.user._id })
+            .sort({ timestamp: -1 })
+            .limit(10)
+            .populate('relatedItem', 'title')
+            .populate('relatedTrade', 'status');
+
     res.render('dashboard', {
         title: 'Dashboard',
-        user: req.user
+            user: req.user,
+            recentActivity: recentActivity
+        });
+    } catch (error) {
+        console.error('Error fetching recent activity:', error);
+        res.status(500).render('error', {
+            title: 'Error',
+            msg: 'Failed to fetch recent activity',
+            error: error
     });
+    }
 });
+
+async function getRecentActivity(userId) {
+    // Fetch recent activities from the database
+    // This is a placeholder. Replace with actual logic to fetch activities.
+    return [];
+}
 
 // About page
 router.get('/about', (req, res) => {

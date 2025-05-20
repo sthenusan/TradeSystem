@@ -1,0 +1,40 @@
+<div class="card-content">
+    <span class="card-title">
+        <%= item.title %>
+    </span>
+    <p>
+        <%= item.description %>
+    </p>
+    <p><strong>Owner:</strong>
+        <%= item.owner.name %>
+    </p>
+    <p><strong>Category:</strong>
+        <%= item.category %>
+    </p>
+    <p><strong>Condition:</strong>
+        <%= item.condition %>
+    </p>
+    <p><strong>Listed:</strong>
+        <%= new Date(item.createdAt).toLocaleDateString() %>
+    </p>
+</div>
+<div class="card-action">
+    <% if (user && user._id.toString() !==item.owner._id.toString()) { %>
+        <a href="/trades/create?item=<%= item._id %>" class="btn waves-effect waves-light">
+            <i class="material-icons left">swap_horiz</i>
+            Propose Trade
+        </a>
+        <% } %>
+            <% if (user && user._id.toString()===item.owner._id.toString()) { %>
+                <a href="/items/edit/<%= item._id %>" class="btn waves-effect waves-light">
+                    <i class="material-icons left">edit</i>
+                    Edit
+                </a>
+                <form action="/items/<%= item._id %>?_method=DELETE" method="POST" style="display: inline;">
+                    <button type="submit" class="btn waves-effect waves-light red">
+                        <i class="material-icons left">delete</i>
+                        Delete
+                    </button>
+                </form>
+                <% } %>
+</div>

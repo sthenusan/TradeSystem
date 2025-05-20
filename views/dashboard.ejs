@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,76 +9,118 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
     <!-- Navigation -->
     <%- include('partials/navbar') %>
 
-    <!-- Flash Messages -->
-    <%- include('partials/messages') %>
+        <!-- Flash Messages -->
+        <%- include('partials/messages') %>
 
-    <div class="container">
-        <div class="row">
-            <div class="col s12">
-                <h4>Welcome, <%= user.firstName %>!</h4>
-                <p>This is your dashboard. Here you can manage your items and trades.</p>
-            </div>
-        </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col s12">
+                        <h4>Welcome, <%= user.firstName %>!</h4>
+                        <p>This is your dashboard. Here you can manage your items and trades.</p>
+                    </div>
+                </div>
 
-        <div class="row">
-            <!-- Quick Actions -->
-            <div class="col s12 m6">
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title">Quick Actions</span>
-                        <div class="collection">
-                            <a href="/items/create" class="collection-item">
-                                <i class="material-icons left">add</i>
-                                List New Item
-                            </a>
-                            <a href="/items" class="collection-item">
-                                <i class="material-icons left">search</i>
-                                Browse Items
-                            </a>
-                            <a href="/trades" class="collection-item">
-                                <i class="material-icons left">swap_horiz</i>
-                                View My Trades
-                            </a>
+                <div class="row">
+                    <!-- Quick Actions -->
+                    <div class="col s12 m6">
+                        <div class="card">
+                            <div class="card-content">
+                                <span class="card-title">Quick Actions</span>
+                                <div class="collection">
+                                    <a href="/items/create" class="collection-item">
+                                        <i class="material-icons left">add</i>
+                                        List New Item
+                                    </a>
+                                    <a href="/items" class="collection-item">
+                                        <i class="material-icons left">list</i>
+                                        Browse Items
+                                    </a>
+                                    <a href="/trades" class="collection-item">
+                                        <i class="material-icons left">swap_horiz</i>
+                                        My Trades
+                                    </a>
+                                    <a href="/users/profile" class="collection-item">
+                                        <i class="material-icons left">person</i>
+                                        My Profile
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="col s12 m6">
+                        <div class="card">
+                            <div class="card-content">
+                                <span class="card-title">Recent Activity</span>
+                                <ul class="collection">
+                                    <% if (recentActivity && recentActivity.length> 0) { %>
+                                        <% recentActivity.forEach(activity=> { %>
+                                            <li class="collection-item">
+                                                <div class="activity-item">
+                                                    <i class="material-icons left">
+                                                        <% if (activity.type==='ITEM_ADDED' ) { %>
+                                                            add_circle
+                                                            <% } else if (activity.type==='TRADE_CREATED' ) { %>
+                                                                swap_horiz
+                                                                <% } else if (activity.type==='TRADE_ACCEPTED' ) { %>
+                                                                    check_circle
+                                                                    <% } else if (activity.type==='TRADE_REJECTED' ) {
+                                                                        %>
+                                                                        cancel
+                                                                        <% } else if (activity.type==='TRADE_COMPLETED'
+                                                                            ) { %>
+                                                                            done_all
+                                                                            <% } %>
+                                                    </i>
+                                                    <span class="activity-description">
+                                                        <%= activity.description %>
+                                                    </span>
+                                                    <span class="secondary-content grey-text">
+                                                        <%= new Date(activity.timestamp).toLocaleDateString() %>
+                                                    </span>
+                                                </div>
+                                            </li>
+                                            <% }); %>
+                                                <% } else { %>
+                                                    <li class="collection-item">No recent activity to show.</li>
+                                                    <% } %>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Recent Activity -->
-            <div class="col s12 m6">
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title">Recent Activity</span>
-                        <% if (locals.recentActivity && recentActivity.length > 0) { %>
-                            <ul class="collection">
-                                <% recentActivity.forEach(activity => { %>
-                                    <li class="collection-item">
-                                        <span class="title"><%= activity.title %></span>
-                                        <p><%= activity.description %></p>
-                                        <small class="grey-text"><%= activity.timestamp %></small>
-                                    </li>
-                                <% }); %>
-                            </ul>
-                        <% } else { %>
-                            <p>No recent activity to show.</p>
-                        <% } %>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+            <style>
+                .activity-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('.sidenav').sidenav();
-            $('.dropdown-trigger').dropdown();
-        });
-    </script>
+                .activity-description {
+                    flex-grow: 1;
+                }
+
+                .material-icons {
+                    color: #666;
+                }
+            </style>
+
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+            <script>
+                $(document).ready(function () {
+                    $('.sidenav').sidenav();
+                    $('.dropdown-trigger').dropdown();
+                });
+            </script>
 </body>
-</html> 
+
+</html>
