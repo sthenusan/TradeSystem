@@ -26,7 +26,7 @@ describe('Trade Service Unit Test', () => {
         // Create test items
         offeredItem = await Item.create({
             title: 'Test Offered Item',
-            description: 'Test Description',
+            description: 'Test Description2',
             owner: initiator._id,
             images: ['test-image.jpg'],
             status: 'Available'
