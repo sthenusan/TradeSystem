@@ -32,7 +32,8 @@ describe('User Controller Tests', () => {
     });
 
     afterAll(async () => {
-        // Disconnect from test database
+        // Clean up and disconnect
+        await User.deleteMany({});
         await mongoose.connection.close();
     });
 
@@ -40,11 +41,12 @@ describe('User Controller Tests', () => {
         // Clear users collection
         await User.deleteMany({});
 
-        // Create test user
+        // Create test user with unique email
+        const timestamp = Date.now();
         testUser = await User.create({
             firstName: 'Test',
             lastName: 'User',
-            email: 'test@example.com',
+            email: `test${timestamp}@example.com`,
             password: testPassword // plain text, let model hash it
         });
     });
@@ -64,14 +66,15 @@ describe('User Controller Tests', () => {
 
             const res = mockResponse();
 
-            const beforeUser = await User.findById(testUser._id);
-            console.log('[TEST DEBUG] Before update, user.password:', beforeUser.password);
-
             await userController.updateProfile(req, res);
 
             // Verify the password was changed
             const updatedUser = await User.findById(testUser._id);
-            console.log('[TEST DEBUG] After update, user.password:', updatedUser.password);
+            if (!updatedUser) {
+                // eslint-disable-next-line no-console
+                console.error('[DEBUG] updatedUser is null after updateProfile');
+            }
+            expect(updatedUser).toBeDefined();
             const isMatch = await bcrypt.compare(newPassword, updatedUser.password);
             expect(isMatch).toBe(true);
         });
@@ -94,6 +97,7 @@ describe('User Controller Tests', () => {
 
             // Verify the password was not changed
             const updatedUser = await User.findById(testUser._id);
+            expect(updatedUser).toBeDefined();
             const isMatch = await bcrypt.compare(testPassword, updatedUser.password);
             expect(isMatch).toBe(true);
         });
@@ -116,6 +120,7 @@ describe('User Controller Tests', () => {
 
             // Verify the password was not changed
             const updatedUser = await User.findById(testUser._id);
+            expect(updatedUser).toBeDefined();
             const isMatch = await bcrypt.compare(testPassword, updatedUser.password);
             expect(isMatch).toBe(true);
         });
@@ -138,6 +143,7 @@ describe('User Controller Tests', () => {
 
             // Verify the password was not changed
             const updatedUser = await User.findById(testUser._id);
+            expect(updatedUser).toBeDefined();
             const isMatch = await bcrypt.compare(testPassword, updatedUser.password);
             expect(isMatch).toBe(true);
         });

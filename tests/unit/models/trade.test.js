@@ -8,46 +8,7 @@ describe('Trade Model Test', () => {
 
     beforeAll(async () => {
         // Connect to test database
-        await mongoose.connect(process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/trade_test', {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-
-        // Create test users
-        initiator = await User.create({
-            firstName: 'Test',
-            lastName: 'Initiator',
-            email: 'initiator@test.com',
-            password: 'password123'
-        });
-
-        receiver = await User.create({
-            firstName: 'Test',
-            lastName: 'Receiver',
-            email: 'receiver@test.com',
-            password: 'password123'
-        });
-
-        // Create test items
-        offeredItem = await Item.create({
-            title: 'Test Offered Item',
-            description: 'Test Description',
-            owner: initiator._id,
-            images: ['test-image.jpg'],
-            location: 'Test Location',
-            condition: 'New',
-            category: 'Electronics'
-        });
-
-        requestedItem = await Item.create({
-            title: 'Test Requested Item',
-            description: 'Test Description',
-            owner: receiver._id,
-            images: ['test-image.jpg'],
-            location: 'Test Location',
-            condition: 'New',
-            category: 'Electronics'
-        });
+        await mongoose.connect(process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/trade_test');
     });
 
     afterAll(async () => {
@@ -59,7 +20,48 @@ describe('Trade Model Test', () => {
     });
 
     beforeEach(async () => {
+        // Clean up before each test
+        await User.deleteMany({});
+        await Item.deleteMany({});
         await Trade.deleteMany({});
+
+        // Create test users with robust unique emails
+        const unique = `${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+        initiator = await User.create({
+            firstName: 'Test',
+            lastName: 'Initiator',
+            email: `initiator${unique}@test.com`,
+            password: 'password123'
+        });
+        receiver = await User.create({
+            firstName: 'Test',
+            lastName: 'Receiver',
+            email: `receiver${unique}@test.com`,
+            password: 'password123'
+        });
+
+        // Create test items
+        offeredItem = await Item.create({
+            title: 'Test Offered Item',
+            description: 'Test Description',
+            owner: initiator._id,
+            images: ['test-image.jpg'],
+            location: 'Test Location',
+            condition: 'New',
+            category: 'Electronics',
+            status: 'Available'
+        });
+
+        requestedItem = await Item.create({
+            title: 'Test Requested Item',
+            description: 'Test Description',
+            owner: receiver._id,
+            images: ['test-image.jpg'],
+            location: 'Test Location',
+            condition: 'New',
+            category: 'Electronics',
+            status: 'Available'
+        });
     });
 
     it('should create a trade successfully', async () => {
