@@ -417,21 +417,6 @@
                                 </button>
                             </div>
                         </form>
-
-                        <!-- Delete Account Section -->
-                        <div class="section-divider">
-                            <h5>Delete Account</h5>
-                            <p class="grey-text">Once you delete your account, there is no going back. Please be
-                                certain.</p>
-                            <form action="/users/profile" method="POST" onsubmit="return confirmDelete()">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn waves-effect waves-light red"
-                                    style="margin-top: 16px;">
-                                    <i class="material-icons left">delete_forever</i>
-                                    Delete Account
-                                </button>
-                            </form>
-                        </div>
                     </div>
                     <% } %>
 
@@ -463,28 +448,23 @@
 
                                     // Handle verification code input
                                     const codeInputs = document.querySelectorAll('.code-input');
-                                    codeInputs.forEach(input => {
-                                        input.addEventListener('input', (e) => {
-                                            if (e.target.value) {
-                                                const nextIndex = parseInt(e.target.dataset.index) + 1;
-                                                if (nextIndex < 6) {
-                                                    codeInputs[nextIndex].focus();
+                                    codeInputs.forEach((input, index) => {
+                                        input.addEventListener('input', function (e) {
+                                            if (e.target.value.length === 1) {
+                                                if (index < codeInputs.length - 1) {
+                                                    codeInputs[index + 1].focus();
                                                 }
                                             }
                                         });
 
-                                        input.addEventListener('keydown', (e) => {
-                                            if (e.key === 'Backspace' && !e.target.value) {
-                                                const prevIndex = parseInt(e.target.dataset.index) - 1;
-                                                if (prevIndex >= 0) {
-                                                    codeInputs[prevIndex].focus();
-                                                }
+                                        input.addEventListener('keydown', function (e) {
+                                            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                                                codeInputs[index - 1].focus();
                                             }
                                         });
                                     });
                                 });
 
-                                // Toggle password visibility
                                 function togglePassword(inputId) {
                                     const input = document.getElementById(inputId);
                                     const icon = input.nextElementSibling;
@@ -496,84 +476,6 @@
                                         input.type = 'password';
                                         icon.textContent = 'visibility_off';
                                     }
-                                }
-
-                                // Confirm account deletion
-                                function confirmDelete() {
-                                    return confirm('Are you sure you want to delete your account? This action cannot be undone.');
-                                }
-
-                                // Send verification email and show modal
-                                async function requestVerification() {
-                                    try {
-                                        const response = await fetch('/users/send-verification', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            }
-                                        });
-                                        const data = await response.json();
-
-                                        if (data.status === 'success') {
-                                            const modal = M.Modal.getInstance(document.getElementById('verificationModal'));
-                                            modal.open();
-                                            document.getElementById('verificationMessage').textContent = data.message;
-                                            document.getElementById('verificationMessage').className = 'message success';
-                                            // Clear any existing code inputs
-                                            document.querySelectorAll('.code-input').forEach(input => input.value = '');
-                                            // Focus on first input
-                                            document.querySelector('.code-input').focus();
-                                        } else {
-                                            M.toast({ html: data.message, classes: 'red' });
-                                        }
-                                    } catch (err) {
-                                        console.error('Error:', err);
-                                        M.toast({ html: 'Error sending verification code', classes: 'red' });
-                                    }
-                                }
-
-                                // Verify the code
-                                async function verifyCode() {
-                                    const codeInputs = document.querySelectorAll('.code-input');
-                                    const code = Array.from(codeInputs).map(input => input.value).join('');
-                                    if (code.length !== 6) {
-                                        document.getElementById('verificationMessage').textContent = 'Please enter all 6 digits';
-                                        document.getElementById('verificationMessage').className = 'message error';
-                                        return;
-                                    }
-
-                                    try {
-                                        const response = await fetch('/users/verify-code', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            },
-                                            body: JSON.stringify({ code })
-                                        });
-                                        const data = await response.json();
-
-                                        if (data.status === 'success') {
-                                            document.getElementById('verificationMessage').textContent = data.message;
-                                            document.getElementById('verificationMessage').className = 'message success';
-                                            setTimeout(() => {
-                                                window.location.reload();
-                                            }, 1500);
-                                        } else {
-                                            document.getElementById('verificationMessage').textContent = data.message;
-                                            document.getElementById('verificationMessage').className = 'message error';
-                                        }
-                                    } catch (err) {
-                                        console.error('Error:', err);
-                                        document.getElementById('verificationMessage').textContent = 'Error verifying code';
-                                        document.getElementById('verificationMessage').className = 'message error';
-                                    }
-                                }
-
-                                // Resend verification code
-                                async function resendCode() {
-                                    const codeInputs = document.querySelectorAll('.code-input');
-                                    codeInputs.forEach(input => input.value = '');
-                                    await requestVerification();
                                 }
                             </script>
 

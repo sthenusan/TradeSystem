@@ -149,7 +149,6 @@ router.get('/profile', ensureAuthenticated, userController.getProfile);
 router.post('/profile', ensureAuthenticated, upload.single('profilePicture'), userController.updateProfile);
 router.get('/profile/items', ensureAuthenticated, userController.getUserItems);
 router.get('/profile/trades', ensureAuthenticated, userController.getUserTrades);
-router.delete('/profile', ensureAuthenticated, userController.deleteAccount);
 
 // Email verification routes
 router.post('/send-verification', ensureAuthenticated, userController.sendVerificationEmail);

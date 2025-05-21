@@ -4,19 +4,29 @@ const User = require('../models/User');
 
 // Create new trade proposal
 async function createTradeService({ initiator, receiverId, offeredItems, requestedItems, message }) {
-    // Validate items ownership
+    // Validate receiver exists
+    const receiver = await User.findById(receiverId);
+    if (!receiver) {
+        throw new Error('Invalid receiver');
+    }
+
+    // Validate items ownership and availability
     const offeredItemsList = await Item.find({
         _id: { $in: offeredItems },
-        owner: initiator
+        owner: initiator,
+        status: 'Available'
     });
     const requestedItemsList = await Item.find({
         _id: { $in: requestedItems },
-        owner: receiverId
+        owner: receiverId,
+        status: 'Available'
     });
+
     if (offeredItemsList.length !== offeredItems.length ||
         requestedItemsList.length !== requestedItems.length) {
-        throw new Error('Invalid items selected');
+        throw new Error('Items are not available for trade');
     }
+
     const newTrade = new Trade({
         initiator,
         receiver: receiverId,
@@ -25,6 +35,7 @@ async function createTradeService({ initiator, receiverId, offeredItems, request
         messages: [{ sender: initiator, content: message }]
     });
     await newTrade.save();
+
     // Update items status to pending
     await Item.updateMany(
         { _id: { $in: [...offeredItems, ...requestedItems] } },
@@ -36,45 +47,67 @@ async function createTradeService({ initiator, receiverId, offeredItems, request
 // Get trade details
 async function getTradeService(tradeId) {
     const trade = await Trade.findById(tradeId)
-        .populate('initiator receiver', 'name rating')
-        .populate('offeredItems requestedItems')
-        .populate('messages.sender', 'name');
+        .populate('initiator', 'firstName lastName')
+        .populate('receiver', 'firstName lastName')
+        .populate('offeredItems')
+        .populate('requestedItems')
+        .populate('messages.sender', 'firstName lastName');
+
+    if (!trade) {
+        throw new Error('Trade not found');
+    }
     return trade;
 }
 
 // Update trade status
 async function updateTradeStatusService(tradeId, userId, status) {
     const trade = await Trade.findById(tradeId);
-    if (!trade) return null;
-    if (trade.receiver.toString() !== userId) throw new Error('Not authorized');
+    if (!trade) {
+        throw new Error('Trade not found');
+    }
+
+    if (!['Pending', 'Accepted', 'Rejected', 'Completed'].includes(status)) {
+        throw new Error('Invalid status');
+    }
+
+    if (trade.receiver.toString() !== userId.toString()) {
+        throw new Error('Not authorized');
+    }
+
     trade.status = status;
     await trade.save();
+
     // Update items status based on trade status
     if (status === 'Accepted') {
         await Item.updateMany(
             { _id: { $in: [...trade.offeredItems, ...trade.requestedItems] } },
             { status: 'Traded' }
         );
-        await User.updateMany(
-            { _id: { $in: [trade.initiator, trade.receiver] } },
-            { $inc: { totalTrades: 1 } }
-        );
-    } else if (status === 'Rejected' || status === 'Cancelled') {
+    } else if (status === 'Rejected') {
         await Item.updateMany(
             { _id: { $in: [...trade.offeredItems, ...trade.requestedItems] } },
             { status: 'Available' }
         );
     }
+
     return trade;
 }
 
 // Add message to trade
 async function addMessageService(tradeId, userId, content) {
+    if (!content || content.trim() === '') {
+        throw new Error('Message content is required');
+    }
+
     const trade = await Trade.findById(tradeId);
-    if (!trade) return null;
-    if (trade.initiator.toString() !== userId && trade.receiver.toString() !== userId) {
+    if (!trade) {
+        throw new Error('Trade not found');
+    }
+
+    if (trade.initiator.toString() !== userId.toString() && trade.receiver.toString() !== userId.toString()) {
         throw new Error('Not authorized');
     }
+
     await trade.addMessage(userId, content);
     return trade;
 }

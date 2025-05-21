@@ -103,12 +103,25 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
-// Routes
-app.use('/', require('./routes/index'));
-app.use('/users', require('./routes/userRoutes'));
-app.use('/items', require('./routes/itemRoutes'));
+// API Routes
+app.use('/api/trades', require('./routes/tradeRoutes'));
+app.use('/api/items', require('./routes/itemRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/ratings', require('./routes/ratingRoutes'));
+
+// Web Routes
 app.use('/trades', require('./routes/tradeRoutes'));
+app.use('/items', require('./routes/itemRoutes'));
+app.use('/users', require('./routes/userRoutes'));
 app.use('/ratings', require('./routes/ratingRoutes'));
+
+// Mount index.js router for root path
+app.use('/', require('./routes/index'));
+
+// Root route
+app.get('/', (req, res) => {
+  res.render('index', { title: 'Home' });
+});
 
 // 404 handler
 app.use((req, res, next) => {
@@ -129,19 +142,12 @@ app.use((req, res, next) => {
 // Global error handler
 app.use(require('./middleware/errorHandler'));
 
-// Start server
-const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-    console.error('UNHANDLED REJECTION! 💥 Shutting down...');
-    console.error(err.name, err.message);
-    server.close(() => {
-        process.exit(1);
+// Start server only if this file is run directly
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
     });
-}); 
+}
 
 module.exports = app; 
