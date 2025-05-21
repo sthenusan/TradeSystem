@@ -10,16 +10,23 @@ describe('Trade Service Integration Test', () => {
     beforeAll(async () => {
         await mongoose.connect(process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/trade_test');
         
+        // Clean up the database
+        await User.deleteMany({});
+        await Item.deleteMany({});
+        await Trade.deleteMany({});
+        
         // Create test users and items
         initiator = await User.create({
-            name: 'Test Initiator',
-            email: 'initiator@test.com',
+            firstName: 'Test',
+            lastName: 'Initiator',
+            email: 'initiator.service@test.com',
             password: 'password123'
         });
 
         receiver = await User.create({
-            name: 'Test Receiver',
-            email: 'receiver@test.com',
+            firstName: 'Test',
+            lastName: 'Receiver',
+            email: 'receiver.service@test.com',
             password: 'password123'
         });
 
@@ -28,6 +35,9 @@ describe('Trade Service Integration Test', () => {
             description: 'Test Description',
             owner: initiator._id,
             images: ['test-image.jpg'],
+            location: 'Test Location',
+            condition: 'New',
+            category: 'Electronics',
             status: 'Available'
         });
 
@@ -36,6 +46,9 @@ describe('Trade Service Integration Test', () => {
             description: 'Test Description',
             owner: receiver._id,
             images: ['test-image.jpg'],
+            location: 'Test Location',
+            condition: 'New',
+            category: 'Electronics',
             status: 'Available'
         });
     });

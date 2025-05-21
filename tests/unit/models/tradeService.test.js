@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
-const tradeService = require('../../services/tradeService');
-const User = require('../../models/User');
-const Item = require('../../models/Item');
-const Trade = require('../../models/Trade');
+const tradeService = require('../../../services/tradeService');
+const User = require('../../../models/User');
+const Item = require('../../../models/Item');
+const Trade = require('../../../models/Trade');
 
 describe('Trade Service Unit Test', () => {
     let initiator, receiver, offeredItem, requestedItem;
@@ -12,13 +12,15 @@ describe('Trade Service Unit Test', () => {
 
         // Create test users
         initiator = await User.create({
-            name: 'Test Initiator',
+            firstName: 'Test',
+            lastName: 'Initiator',
             email: 'initiator@test.com',
             password: 'password123'
         });
 
         receiver = await User.create({
-            name: 'Test Receiver',
+            firstName: 'Test',
+            lastName: 'Receiver',
             email: 'receiver@test.com',
             password: 'password123'
         });
@@ -29,6 +31,9 @@ describe('Trade Service Unit Test', () => {
             description: 'Test Description',
             owner: initiator._id,
             images: ['test-image.jpg'],
+            location: 'Test Location',
+            condition: 'New',
+            category: 'Electronics',
             status: 'Available'
         });
 
@@ -37,6 +42,9 @@ describe('Trade Service Unit Test', () => {
             description: 'Test Description',
             owner: receiver._id,
             images: ['test-image.jpg'],
+            location: 'Test Location',
+            condition: 'New',
+            category: 'Electronics',
             status: 'Available'
         });
     });
@@ -97,11 +105,12 @@ describe('Trade Service Unit Test', () => {
 
             await expect(tradeService.createTradeService(tradeData))
                 .rejects
-                .toThrow('Invalid items selected');
+                .toThrow('Items are not available for trade');
         });
 
         it('should throw error for unavailable items', async () => {
-            await Item.findByIdAndUpdate(offeredItem._id, { status: 'Traded' });
+            // Make items unavailable
+            await Item.updateMany({}, { status: 'Traded' });
 
             const tradeData = {
                 initiator: initiator._id,
@@ -133,7 +142,11 @@ describe('Trade Service Unit Test', () => {
             );
 
             expect(updatedTrade.status).toBe('Accepted');
-            expect(updatedTrade.updatedAt).toBeDefined();
+
+            const updatedOfferedItem = await Item.findById(offeredItem._id);
+            const updatedRequestedItem = await Item.findById(requestedItem._id);
+            expect(updatedOfferedItem.status).toBe('Traded');
+            expect(updatedRequestedItem.status).toBe('Traded');
         });
 
         it('should update trade status to Rejected', async () => {
@@ -151,6 +164,11 @@ describe('Trade Service Unit Test', () => {
             );
 
             expect(updatedTrade.status).toBe('Rejected');
+
+            const updatedOfferedItem = await Item.findById(offeredItem._id);
+            const updatedRequestedItem = await Item.findById(requestedItem._id);
+            expect(updatedOfferedItem.status).toBe('Available');
+            expect(updatedRequestedItem.status).toBe('Available');
         });
 
         it('should throw error for invalid status', async () => {
@@ -213,7 +231,8 @@ describe('Trade Service Unit Test', () => {
             });
 
             const thirdUser = await User.create({
-                name: 'Third User',
+                firstName: 'Third',
+                lastName: 'User',
                 email: 'third@test.com',
                 password: 'password123'
             });
@@ -257,8 +276,10 @@ describe('Trade Service Unit Test', () => {
             const tradeDetails = await tradeService.getTradeService(trade._id);
 
             expect(tradeDetails).toBeDefined();
-            expect(tradeDetails.initiator.name).toBe('Test Initiator');
-            expect(tradeDetails.receiver.name).toBe('Test Receiver');
+            expect(tradeDetails.initiator.firstName).toBe('Test');
+            expect(tradeDetails.initiator.lastName).toBe('Initiator');
+            expect(tradeDetails.receiver.firstName).toBe('Test');
+            expect(tradeDetails.receiver.lastName).toBe('Receiver');
             expect(tradeDetails.offeredItems[0].title).toBe('Test Offered Item');
             expect(tradeDetails.requestedItems[0].title).toBe('Test Requested Item');
             expect(tradeDetails.messages[0].content).toBe('Test message');
