@@ -4,6 +4,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { generateVerificationCode, sendVerificationEmail } = require('../services/emailService');
+const transporter = require('../services/emailService').transporter;
 
 // Get user profile
 exports.getProfile = async (req, res) => {
@@ -30,6 +31,7 @@ exports.updateProfile = async (req, res) => {
 
         // Get current user
         const user = await User.findById(req.user.id);
+        console.log('[DEBUG] Loaded user:', user ? user.email : 'not found');
         
         // Check if email is being changed and if it's already taken
         if (email !== user.email) {
@@ -55,6 +57,7 @@ exports.updateProfile = async (req, res) => {
         if (currentPassword && newPassword) {
             // Validate current password
             const isMatch = await user.comparePassword(currentPassword);
+            console.log('[DEBUG] Current password match:', isMatch);
             if (!isMatch) {
                 req.flash('error_msg', 'Current password is incorrect');
                 return res.redirect('/users/profile');
@@ -73,9 +76,10 @@ exports.updateProfile = async (req, res) => {
                 return res.redirect('/users/profile');
             }
 
-            // Hash new password
-            const salt = await bcrypt.genSalt(10);
-            updateData.password = await bcrypt.hash(newPassword, salt);
+            // Update password directly on the user object
+            user.password = newPassword;
+            await user.save();
+            console.log('[DEBUG] Password updated and saved for user:', user.email);
         }
 
         // Handle profile picture upload
@@ -104,12 +108,24 @@ exports.updateProfile = async (req, res) => {
             updateData.profilePicture = req.file.filename;
         }
 
-        // Update user
-        await User.findByIdAndUpdate(req.user.id, updateData, { new: true });
+        // Update other user data
+        if (Object.keys(updateData).length > 0) {
+            const updatedUser = await User.findByIdAndUpdate(
+                req.user.id,
+                { $set: updateData },
+                { new: true }
+            );
+
+            if (!updatedUser) {
+                req.flash('error_msg', 'Error updating profile');
+                return res.redirect('/users/profile');
+            }
+        }
+
         req.flash('success_msg', 'Profile updated successfully');
         res.redirect('/users/profile');
     } catch (err) {
-        console.error(err);
+        console.error('Error updating profile:', err);
         req.flash('error_msg', 'Error updating profile');
         res.redirect('/users/profile');
     }

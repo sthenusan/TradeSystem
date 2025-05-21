@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const Trade = require('../../models/Trade');
-const User = require('../../models/User');
-const Item = require('../../models/Item');
+const Trade = require('../../../models/Trade');
+const User = require('../../../models/User');
+const Item = require('../../../models/Item');
 
 describe('Trade Model Test', () => {
     let initiator, receiver, offeredItem, requestedItem;
@@ -15,13 +15,15 @@ describe('Trade Model Test', () => {
 
         // Create test users
         initiator = await User.create({
-            name: 'Test Initiator',
+            firstName: 'Test',
+            lastName: 'Initiator',
             email: 'initiator@test.com',
             password: 'password123'
         });
 
         receiver = await User.create({
-            name: 'Test Receiver',
+            firstName: 'Test',
+            lastName: 'Receiver',
             email: 'receiver@test.com',
             password: 'password123'
         });
@@ -31,14 +33,20 @@ describe('Trade Model Test', () => {
             title: 'Test Offered Item',
             description: 'Test Description',
             owner: initiator._id,
-            images: ['test-image.jpg']
+            images: ['test-image.jpg'],
+            location: 'Test Location',
+            condition: 'New',
+            category: 'Electronics'
         });
 
         requestedItem = await Item.create({
             title: 'Test Requested Item',
             description: 'Test Description',
             owner: receiver._id,
-            images: ['test-image.jpg']
+            images: ['test-image.jpg'],
+            location: 'Test Location',
+            condition: 'New',
+            category: 'Electronics'
         });
     });
 
