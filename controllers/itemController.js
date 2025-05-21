@@ -117,4 +117,31 @@ exports.deleteItem = async (req, res) => {
         console.error(err);
         res.status(500).render('error', { message: 'Server Error' });
     }
+};
+
+// Render manage items page
+exports.getManageItems = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { status = 'all', search = '' } = req.query;
+        const items = await itemService.getUserItemsWithFilters(userId, { status, search });
+        const activeListings = await itemService.countUserItemsByStatus(userId, 'Available');
+        const completedTrades = await itemService.countUserItemsByStatus(userId, 'Traded');
+        // TODO: Static values for now
+        const totalViews = 2400;
+        const tradeRequests = 18;
+        res.render('items/manageItems', {
+            user: req.user,
+            items,
+            activeListings,
+            completedTrades,
+            totalViews,
+            tradeRequests,
+            status,
+            search
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).render('error', { message: 'Server Error' });
+    }
 }; 

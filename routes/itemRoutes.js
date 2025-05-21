@@ -42,6 +42,9 @@ function checkFileType(file, cb) {
 // Get all items
 router.get('/', itemController.getItems);
 
+// Manage items page
+router.get('/manage', ensureAuthenticated, itemController.getManageItems);
+
 // Get available items for trade (API endpoint)
 router.get('/my/available', ensureAuthenticated, async (req, res) => {
     try {
@@ -49,7 +52,7 @@ router.get('/my/available', ensureAuthenticated, async (req, res) => {
             owner: req.user._id,
             status: 'Available'
         }).select('title description images');
-        
+
         res.json(items);
     } catch (error) {
         console.error('Error fetching available items:', error);
@@ -61,7 +64,7 @@ router.get('/my/available', ensureAuthenticated, async (req, res) => {
 router.post('/', ensureAuthenticated, upload.array('images', 5), async (req, res) => {
     try {
         const item = await itemController.createItem(req, res);
-        
+
         // Create activity for new item
         await Activity.create({
             user: req.user._id,
@@ -123,7 +126,7 @@ router.delete('/:id', ensureAuthenticated, itemController.deleteItem);
 router.get('/browse', async (req, res) => {
     try {
         const { items, currentPage, pages } = await itemService.getItemsService(req.query);
-        
+
         res.render('items/browse', {
             title: 'Browse Items',
             items: items,
