@@ -87,7 +87,7 @@ async function getBrowseItems(query = {}) {
         status: { $in: ['Available', 'Pending'] },
         ...query
     };
-    
+
     return await Item.find(filter)
         .populate('owner', 'firstName lastName email')
         .sort({ createdAt: -1 });
@@ -133,6 +133,27 @@ async function updateItemsStatus(itemIds, status) {
     );
 }
 
+// Count items for a user by status
+async function countUserItemsByStatus(userId, status) {
+    return await Item.countDocuments({ owner: userId, status });
+}
+
+// Get user's items with optional status/search filters
+async function getUserItemsWithFilters(userId, filters = {}) {
+    const query = { owner: userId };
+    if (filters.status && filters.status !== 'all') {
+        query.status = filters.status.charAt(0).toUpperCase() + filters.status.slice(1);
+    }
+    if (filters.search) {
+        const searchRegex = new RegExp(filters.search, 'i');
+        query.$or = [
+            { title: searchRegex },
+            { description: searchRegex }
+        ];
+    }
+    return await Item.find(query).sort({ createdAt: -1 });
+}
+
 module.exports = {
     getItemsService,
     getItemService,
@@ -145,5 +166,7 @@ module.exports = {
     createItem,
     updateItem,
     deleteItem,
-    updateItemsStatus
+    updateItemsStatus,
+    countUserItemsByStatus,
+    getUserItemsWithFilters
 }; 
