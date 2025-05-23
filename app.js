@@ -7,6 +7,9 @@ const passport = require('passport');
 const flash = require('connect-flash');
 const connectDB = require('./config/db');
 
+// NEW: Require messaging routes
+const messageRoutes = require('./routes/messageRoutes');
+
 // Initialize express app
 const app = express();
 
@@ -69,6 +72,9 @@ app.use('/users', require('./routes/userRoutes'));
 app.use('/items', require('./routes/itemRoutes'));
 app.use('/trades', require('./routes/tradeRoutes'));
 
+// ✅ NEW: Messaging routes
+app.use('/api/messages', messageRoutes); // <-- Add this line
+
 // 404 handler
 app.use((req, res, next) => {
     if (req.accepts('html')) {
@@ -101,4 +107,4 @@ process.on('unhandledRejection', (err) => {
     server.close(() => {
         process.exit(1);
     });
-}); 
+});

@@ -1,0 +1,28 @@
+<!-- views/chat/chat.ejs -->
+
+<div class="chat-container">
+  <div class="chat-header">
+    <h5>Chat with <%= recipient.username %></h5>
+  </div>
+
+  <div class="chat-messages" id="chatBox">
+    <% messages.forEach(msg => { %>
+      <div class="message <%= msg.sender._id.equals(user._id) ? 'sent' : 'received' %>">
+        <p><%= msg.content %></p>
+        <span class="timestamp"><%= new Date(msg.createdAt).toLocaleTimeString() %></span>
+      </div>
+    <% }) %>
+  </div>
+
+  <form id="messageForm" class="chat-input">
+    <input type="hidden" id="recipientId" value="<%= recipient._id %>">
+    <input type="hidden" id="tradeId" value="<%= trade._id %>">
+    <input type="text" id="msgInput" placeholder="Type a message..." required>
+    <button type="submit" class="btn">Send</button>
+  </form>
+</div>
+
+<script>
+  const CURRENT_USER_ID = '<%= user._id %>';
+</script>
+<script src="/js/chat.js"></script>

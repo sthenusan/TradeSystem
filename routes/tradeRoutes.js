@@ -1,7 +1,10 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const { ensureAuthenticated } = require('../middleware/auth');
 const tradeController = require('../controllers/tradeController');
+const Trade = require('../models/Trade');
+const Message = require('../models/Message');
+const User = require('../models/User');
 
 // Get all trades for current user
 router.get('/', ensureAuthenticated, async (req, res) => {
@@ -62,4 +65,33 @@ router.put('/:id/status', ensureAuthenticated, tradeController.updateTradeStatus
 // Add message to trade
 router.post('/:id/messages', ensureAuthenticated, tradeController.addMessage);
 
-module.exports = router; 
+// 🔓 Bypassed Chat Route (TEMP FOR DEV)
+router.get('/chat/:tradeId', async (req, res) => {
+    try {
+        // Hardcoded logged-in user for testing: Demo Trader
+        req.user = await User.findById('682c347004ec912f406c4bd0'); // Replace with actual user ID
+
+        const trade = await Trade.findById(req.params.tradeId).populate('initiator receiver');
+        if (!trade) {
+            return res.status(404).render('error', { message: 'Trade not found' });
+        }
+
+        const recipient = trade.initiator._id.toString() === req.user._id.toString()
+            ? trade.receiver
+            : trade.initiator;
+
+        const messages = await Message.find({ trade: trade._id }).sort({ createdAt: 1 });
+
+        res.render('chat/chat', {
+            user: req.user,
+            trade,
+            recipient,
+            messages
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).render('error', { message: 'Server error' });
+    }
+});
+
+module.exports = router;
