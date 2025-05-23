@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Messages</title>
+
+  <!-- Import Materialize CSS for styling -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+</head>
+<body>
+
+  <!-- Include the navigation bar partial -->
+  <%- include('../partials/navbar') %>
+
+  <div class="container">
+    <h4>My Messages</h4>
+
+    <% if (trades.length === 0) { %>
+      <!-- Show this message if the user has no trade conversations -->
+      <p>No conversations yet. Start trading to begin messaging!</p>
+    <% } else { %>
+      <!-- Loop through each trade and show a chat link -->
+      <ul class="collection">
+        <% trades.forEach(trade => { %>
+          <li class="collection-item">
+            <!-- Link to the chat room for a specific trade -->
+            <a href="/trades/chat/<%= trade._id %>">
+              Chat with
+              <!-- Determine who the other participant is -->
+              <%= (trade.initiator._id.toString() === user._id.toString()) ? trade.receiver.firstName : trade.initiator.firstName %>
+            </a>
+          </li>
+        <% }); %>
+      </ul>
+    <% } %>
+  </div>
+
+</body>
+</html>
