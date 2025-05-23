@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Messages</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+</head>
+<body>
+  <%- include('../partials/navbar') %>
+
+  <div class="container">
+    <h4>My Messages</h4>
+
+    <% if (trades.length === 0) { %>
+      <p>No conversations yet. Start trading to begin messaging!</p>
+    <% } else { %>
+      <ul class="collection">
+        <% trades.forEach(trade => { %>
+          <li class="collection-item">
+            <a href="/trades/chat/<%= trade._id %>">
+              Chat with <%= (trade.initiator._id.toString() === user._id.toString()) ? trade.receiver.firstName : trade.initiator.firstName %>
+            </a>
+          </li>
+        <% }); %>
+      </ul>
+    <% } %>
+  </div>
+</body>
+</html>
