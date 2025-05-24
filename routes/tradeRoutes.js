@@ -8,6 +8,7 @@ const User = require('../models/User');
 const multer = require('multer');
 const upload = multer();
 const mongoose = require('mongoose');
+const tradeController = require('../controllers/tradeController');
 
 // Get all trades for the logged-in user
 router.get('/', ensureAuthenticated, async (req, res) => {
@@ -366,5 +367,8 @@ router.post('/:id/reject', ensureAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Error rejecting trade' });
     }
 });
+
+// Rate trade partner
+router.post('/:id/rate', ensureAuthenticated, tradeController.rateTradePartner);
 
 module.exports = router; 

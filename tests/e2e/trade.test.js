@@ -10,8 +10,6 @@ describe('Trade End-to-End Test', () => {
     let initiatorToken, receiverToken;
 
     beforeAll(async () => {
-        await mongoose.connect(process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/trade_test');
-
         // Create test users
         initiator = await User.create({
             name: 'Test Initiator',
@@ -58,7 +56,6 @@ describe('Trade End-to-End Test', () => {
         await User.deleteMany({});
         await Item.deleteMany({});
         await Trade.deleteMany({});
-        await mongoose.connection.close();
     });
 
     beforeEach(async () => {

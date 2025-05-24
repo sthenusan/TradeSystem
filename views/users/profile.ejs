@@ -393,7 +393,8 @@
                             <div class="input-field-wrapper">
                                 <div class="input-field">
                                     <label>New Password</label>
-                                    <input type="password" name="newPassword" id="newPassword">
+                                    <input type="password" name="newPassword" id="newPassword"
+                                        oninput="validatePasswords()">
                                     <i class="material-icons password-toggle"
                                         onclick="togglePassword('newPassword')">visibility_off</i>
                                 </div>
@@ -402,36 +403,24 @@
                             <div class="input-field-wrapper">
                                 <div class="input-field">
                                     <label>Confirm New Password</label>
-                                    <input type="password" name="confirmNewPassword" id="confirmNewPassword">
+                                    <input type="password" name="confirmNewPassword" id="confirmNewPassword"
+                                        oninput="validatePasswords()">
                                     <i class="material-icons password-toggle"
                                         onclick="togglePassword('confirmNewPassword')">visibility_off</i>
                                 </div>
+                                <div id="passwordMatchMessage" class="helper-text"
+                                    style="color: #dc3545; display: none;"></div>
                             </div>
 
                             <!-- Action Buttons -->
                             <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
                                 <a href="/dashboard" class="btn-flat waves-effect">Cancel</a>
-                                <button type="submit" class="btn waves-effect waves-light green">
+                                <button type="submit" class="btn waves-effect waves-light green" id="saveButton">
                                     <i class="material-icons left">save</i>
                                     Save changes
                                 </button>
                             </div>
                         </form>
-
-                        <!-- Delete Account Section -->
-                        <div class="section-divider">
-                            <h5>Delete Account</h5>
-                            <p class="grey-text">Once you delete your account, there is no going back. Please be
-                                certain.</p>
-                            <form action="/users/profile" method="POST" onsubmit="return confirmDelete()">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn waves-effect waves-light red"
-                                    style="margin-top: 16px;">
-                                    <i class="material-icons left">delete_forever</i>
-                                    Delete Account
-                                </button>
-                            </form>
-                        </div>
                     </div>
                     <% } %>
 
@@ -463,28 +452,54 @@
 
                                     // Handle verification code input
                                     const codeInputs = document.querySelectorAll('.code-input');
-                                    codeInputs.forEach(input => {
-                                        input.addEventListener('input', (e) => {
-                                            if (e.target.value) {
-                                                const nextIndex = parseInt(e.target.dataset.index) + 1;
-                                                if (nextIndex < 6) {
-                                                    codeInputs[nextIndex].focus();
+                                    codeInputs.forEach((input, index) => {
+                                        input.addEventListener('input', function (e) {
+                                            if (e.target.value.length === 1) {
+                                                if (index < codeInputs.length - 1) {
+                                                    codeInputs[index + 1].focus();
                                                 }
                                             }
                                         });
 
-                                        input.addEventListener('keydown', (e) => {
-                                            if (e.key === 'Backspace' && !e.target.value) {
-                                                const prevIndex = parseInt(e.target.dataset.index) - 1;
-                                                if (prevIndex >= 0) {
-                                                    codeInputs[prevIndex].focus();
-                                                }
+                                        input.addEventListener('keydown', function (e) {
+                                            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                                                codeInputs[index - 1].focus();
                                             }
                                         });
                                     });
                                 });
 
-                                // Toggle password visibility
+                                function validatePasswords() {
+                                    const newPassword = document.getElementById('newPassword').value;
+                                    const confirmPassword = document.getElementById('confirmNewPassword').value;
+                                    const messageDiv = document.getElementById('passwordMatchMessage');
+                                    const saveButton = document.getElementById('saveButton');
+
+                                    // Only validate if both new password fields are filled
+                                    if (newPassword || confirmPassword) {
+                                        if (!newPassword || !confirmPassword) {
+                                            messageDiv.textContent = 'Please fill in both password fields';
+                                            messageDiv.style.display = 'block';
+                                            saveButton.disabled = true;
+                                            saveButton.classList.add('disabled');
+                                        } else if (newPassword !== confirmPassword) {
+                                            messageDiv.textContent = 'Passwords do not match';
+                                            messageDiv.style.display = 'block';
+                                            saveButton.disabled = true;
+                                            saveButton.classList.add('disabled');
+                                        } else {
+                                            messageDiv.style.display = 'none';
+                                            saveButton.disabled = false;
+                                            saveButton.classList.remove('disabled');
+                                        }
+                                    } else {
+                                        // If both password fields are empty, allow form submission
+                                        messageDiv.style.display = 'none';
+                                        saveButton.disabled = false;
+                                        saveButton.classList.remove('disabled');
+                                    }
+                                }
+
                                 function togglePassword(inputId) {
                                     const input = document.getElementById(inputId);
                                     const icon = input.nextElementSibling;
@@ -498,82 +513,92 @@
                                     }
                                 }
 
-                                // Confirm account deletion
-                                function confirmDelete() {
-                                    return confirm('Are you sure you want to delete your account? This action cannot be undone.');
-                                }
-
-                                // Send verification email and show modal
-                                async function requestVerification() {
-                                    try {
-                                        const response = await fetch('/users/send-verification', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            }
-                                        });
-                                        const data = await response.json();
-
-                                        if (data.status === 'success') {
-                                            const modal = M.Modal.getInstance(document.getElementById('verificationModal'));
-                                            modal.open();
-                                            document.getElementById('verificationMessage').textContent = data.message;
-                                            document.getElementById('verificationMessage').className = 'message success';
-                                            // Clear any existing code inputs
-                                            document.querySelectorAll('.code-input').forEach(input => input.value = '');
-                                            // Focus on first input
-                                            document.querySelector('.code-input').focus();
-                                        } else {
-                                            M.toast({ html: data.message, classes: 'red' });
+                                // Email verification functions
+                                function requestVerification() {
+                                    fetch('/users/send-verification', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
                                         }
-                                    } catch (err) {
-                                        console.error('Error:', err);
-                                        M.toast({ html: 'Error sending verification code', classes: 'red' });
-                                    }
+                                    })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.status === 'success') {
+                                                M.toast({ html: 'Verification code sent to your email!', classes: 'green' });
+                                                const modal = M.Modal.getInstance(document.getElementById('verificationModal'));
+                                                modal.open();
+                                            } else {
+                                                M.toast({ html: data.message || 'Failed to send verification code', classes: 'red' });
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Error:', error);
+                                            M.toast({ html: 'An error occurred. Please try again.', classes: 'red' });
+                                        });
                                 }
 
-                                // Verify the code
-                                async function verifyCode() {
+                                function verifyCode() {
                                     const codeInputs = document.querySelectorAll('.code-input');
                                     const code = Array.from(codeInputs).map(input => input.value).join('');
+
                                     if (code.length !== 6) {
-                                        document.getElementById('verificationMessage').textContent = 'Please enter all 6 digits';
-                                        document.getElementById('verificationMessage').className = 'message error';
+                                        M.toast({ html: 'Please enter the complete verification code', classes: 'red' });
                                         return;
                                     }
 
-                                    try {
-                                        const response = await fetch('/users/verify-code', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            },
-                                            body: JSON.stringify({ code })
+                                    fetch('/users/verify-code', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ code })
+                                    })
+                                        .then(response => {
+                                            if (!response.ok) {
+                                                throw new Error(`HTTP error! status: ${response.status}`);
+                                            }
+                                            return response.json();
+                                        })
+                                        .then(data => {
+                                            if (data.status === 'success') {
+                                                M.toast({ html: 'Email verified successfully!', classes: 'green' });
+                                                const modal = M.Modal.getInstance(document.getElementById('verificationModal'));
+                                                modal.close();
+                                                // Reload the page to update the verification status
+                                                setTimeout(() => window.location.reload(), 1500);
+                                            } else {
+                                                M.toast({ html: data.message || 'Invalid verification code', classes: 'red' });
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Error:', error);
+                                            M.toast({ html: 'An error occurred. Please try again.', classes: 'red' });
                                         });
-                                        const data = await response.json();
-
-                                        if (data.status === 'success') {
-                                            document.getElementById('verificationMessage').textContent = data.message;
-                                            document.getElementById('verificationMessage').className = 'message success';
-                                            setTimeout(() => {
-                                                window.location.reload();
-                                            }, 1500);
-                                        } else {
-                                            document.getElementById('verificationMessage').textContent = data.message;
-                                            document.getElementById('verificationMessage').className = 'message error';
-                                        }
-                                    } catch (err) {
-                                        console.error('Error:', err);
-                                        document.getElementById('verificationMessage').textContent = 'Error verifying code';
-                                        document.getElementById('verificationMessage').className = 'message error';
-                                    }
                                 }
 
-                                // Resend verification code
-                                async function resendCode() {
-                                    const codeInputs = document.querySelectorAll('.code-input');
-                                    codeInputs.forEach(input => input.value = '');
-                                    await requestVerification();
+                                function resendCode() {
+                                    fetch('/users/send-verification', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        }
+                                    })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.status === 'success') {
+                                                M.toast({ html: 'New verification code sent!', classes: 'green' });
+                                                // Clear the input fields
+                                                document.querySelectorAll('.code-input').forEach(input => input.value = '');
+                                                // Focus on the first input
+                                                document.querySelector('.code-input').focus();
+                                            } else {
+                                                M.toast({ html: data.message || 'Failed to send verification code', classes: 'red' });
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Error:', error);
+                                            M.toast({ html: 'An error occurred. Please try again.', classes: 'red' });
+                                        });
                                 }
                             </script>
 

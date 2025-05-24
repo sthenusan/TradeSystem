@@ -4,22 +4,39 @@ const app = require('../../app');
 const User = require('../../models/User');
 const Item = require('../../models/Item');
 const Trade = require('../../models/Trade');
+const jwt = require('jsonwebtoken');
+
+// Connect to test database
+beforeAll(async () => {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/trade-system-test');
+});
+
+// Clean up database before each test
+beforeEach(async () => {
+    await Trade.deleteMany({});
+    await User.deleteMany({});
+    await Item.deleteMany({});
+});
+
+// Close database connection after all tests
+afterAll(async () => {
+    await mongoose.connection.close();
+});
 
 describe('Trade Routes Integration Test', () => {
     let initiator, receiver, offeredItem, requestedItem, initiatorToken, receiverToken;
 
-    beforeAll(async () => {
-        await mongoose.connect(process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/trade_test');
-
+    beforeEach(async () => {
         // Create test users
         initiator = await User.create({
-            name: 'Test Initiator',
+            firstName: 'Test',
+            lastName: 'Initiator',
             email: 'initiator@test.com',
             password: 'password123'
         });
-
         receiver = await User.create({
-            name: 'Test Receiver',
+            firstName: 'Test',
+            lastName: 'Receiver',
             email: 'receiver@test.com',
             password: 'password123'
         });
@@ -30,39 +47,35 @@ describe('Trade Routes Integration Test', () => {
             description: 'Test Description',
             owner: initiator._id,
             images: ['test-image.jpg'],
-            status: 'Available'
+            status: 'Available',
+            location: 'Test Location',
+            condition: 'Like New',
+            category: 'Electronics',
+            value: 100
         });
-
         requestedItem = await Item.create({
             title: 'Test Requested Item',
             description: 'Test Description',
             owner: receiver._id,
             images: ['test-image.jpg'],
-            status: 'Available'
+            status: 'Available',
+            location: 'Test Location',
+            condition: 'Good',
+            category: 'Books',
+            value: 100
         });
 
-        // Get auth tokens
-        const initiatorLogin = await request(app)
-            .post('/api/auth/login')
-            .send({ email: 'initiator@test.com', password: 'password123' });
-        initiatorToken = initiatorLogin.body.token;
-
-        const receiverLogin = await request(app)
-            .post('/api/auth/login')
-            .send({ email: 'receiver@test.com', password: 'password123' });
-        receiverToken = receiverLogin.body.token;
-    });
-
-    afterAll(async () => {
-        await User.deleteMany({});
-        await Item.deleteMany({});
-        await Trade.deleteMany({});
-        await mongoose.connection.close();
-    });
-
-    beforeEach(async () => {
-        await Trade.deleteMany({});
-        await Item.updateMany({}, { status: 'Available' });
+        // Generate JWT tokens
+        initiatorToken = jwt.sign(
+            { id: initiator._id },
+            process.env.JWT_SECRET || 'test-secret',
+            { expiresIn: '1h' }
+        );
+        receiverToken = jwt.sign(
+            { id: receiver._id },
+            process.env.JWT_SECRET || 'test-secret',
+            { expiresIn: '1h' }
+        );
     });
 
     describe('GET /api/trades/:id', () => {
@@ -91,6 +104,20 @@ describe('Trade Routes Integration Test', () => {
 
             expect(response.status).toBe(404);
         });
+
+        it('should return 401 for unauthorized access', async () => {
+            const trade = await Trade.create({
+                initiator: initiator._id,
+                receiver: receiver._id,
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id]
+            });
+
+            const response = await request(app)
+                .get(`/api/trades/${trade._id}`);
+
+            expect(response.status).toBe(401);
+        });
     });
 
     describe('GET /api/trades/user/:userId', () => {
@@ -117,6 +144,13 @@ describe('Trade Routes Integration Test', () => {
             expect(response.status).toBe(200);
             expect(Array.isArray(response.body)).toBe(true);
             expect(response.body.length).toBe(2);
+        });
+
+        it('should return 401 for unauthorized access', async () => {
+            const response = await request(app)
+                .get(`/api/trades/user/${initiator._id}`);
+
+            expect(response.status).toBe(401);
         });
     });
 
@@ -147,6 +181,13 @@ describe('Trade Routes Integration Test', () => {
             expect(Array.isArray(response.body)).toBe(true);
             expect(response.body.length).toBe(1);
             expect(response.body[0].status).toBe('Pending');
+        });
+
+        it('should return 401 for unauthorized access', async () => {
+            const response = await request(app)
+                .get('/api/trades/status/Pending');
+
+            expect(response.status).toBe(401);
         });
     });
 
@@ -183,6 +224,20 @@ describe('Trade Routes Integration Test', () => {
 
             expect(response.status).toBe(403);
         });
+
+        it('should return 401 for unauthorized access', async () => {
+            const trade = await Trade.create({
+                initiator: initiator._id,
+                receiver: receiver._id,
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id]
+            });
+
+            const response = await request(app)
+                .delete(`/api/trades/${trade._id}`);
+
+            expect(response.status).toBe(401);
+        });
     });
 
     describe('GET /api/trades/search', () => {
@@ -208,6 +263,17 @@ describe('Trade Routes Integration Test', () => {
             expect(Array.isArray(response.body)).toBe(true);
             expect(response.body.length).toBe(1);
             expect(response.body[0].status).toBe('Pending');
+        });
+
+        it('should return 401 for unauthorized access', async () => {
+            const response = await request(app)
+                .get('/api/trades/search')
+                .query({
+                    status: 'Pending',
+                    initiator: initiator._id
+                });
+
+            expect(response.status).toBe(401);
         });
     });
 }); 

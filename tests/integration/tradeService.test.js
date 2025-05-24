@@ -8,8 +8,6 @@ describe('Trade Service Integration Test', () => {
     let initiator, receiver, offeredItem, requestedItem;
 
     beforeAll(async () => {
-        await mongoose.connect(process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/trade_test');
-        
         // Create test users and items
         initiator = await User.create({
             name: 'Test Initiator',
@@ -44,7 +42,6 @@ describe('Trade Service Integration Test', () => {
         await User.deleteMany({});
         await Item.deleteMany({});
         await Trade.deleteMany({});
-        await mongoose.connection.close();
     });
 
     beforeEach(async () => {

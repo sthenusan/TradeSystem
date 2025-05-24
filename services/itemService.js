@@ -1,8 +1,8 @@
 const Item = require('../models/Item');
 
 // Get all items with pagination and filters
-async function getItemsService(queryParams) {
-    const page = parseInt(queryParams.page) || 1;
+async function getItemsService(queryParams = {}) {
+    const page = parseInt(queryParams?.page) || 1;
     const limit = 12;
     const skip = (page - 1) * limit;
 
@@ -11,12 +11,12 @@ async function getItemsService(queryParams) {
     };
 
     // Category and condition filters
-    if (queryParams.category) query.category = queryParams.category;
-    if (queryParams.condition) query.condition = queryParams.condition;
-    if (queryParams.location) query.location = new RegExp(queryParams.location, 'i');
+    if (queryParams?.category) query.category = queryParams.category;
+    if (queryParams?.condition) query.condition = queryParams.condition;
+    if (queryParams?.location) query.location = new RegExp(queryParams.location, 'i');
 
     // Search functionality
-    if (queryParams.search) {
+    if (queryParams?.search) {
         const searchRegex = new RegExp(queryParams.search, 'i');
         query.$or = [
             { title: searchRegex },

@@ -6,17 +6,39 @@ require('dotenv').config();
 async function addSampleListings() {
     try {
         await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
+            // useNewUrlParser: true, // deprecated
+            // useUnifiedTopology: true // deprecated
         });
         console.log('Connected to MongoDB');
 
-        const user1 = await User.findOne({ email: 'sthenusan.17@cse.mrt.ac.lk' });
-        const user2 = await User.findOne({ email: 'thenusan1997@gmail.com' });
+        // User data
+        const user1Data = {
+            firstName: 'Rome',
+            lastName: 'Sivaguru',
+            email: 'sthenusan.17@cse.mrt.ac.lk',
+            password: 'Password@123',
+            isEmailVerified: true
+        };
+        const user2Data = {
+            firstName: 'Thenusan',
+            lastName: 'Santhirakumar',
+            email: 'thenusan1997@gmail.com',
+            password: 'Password@123',
+            isEmailVerified: true
+        };
 
-        if (!user1 || !user2) {
-            console.error('One or both users not found');
-            return;
+        // Create users if they don't exist
+        let user1 = await User.findOne({ email: user1Data.email });
+        if (!user1) {
+            user1 = new User(user1Data);
+            await user1.save();
+            console.log('Created user:', user1.email);
+        }
+        let user2 = await User.findOne({ email: user2Data.email });
+        if (!user2) {
+            user2 = new User(user2Data);
+            await user2.save();
+            console.log('Created user:', user2.email);
         }
 
         const user1Items = [

@@ -7,12 +7,6 @@ describe('Trade Model Test', () => {
     let initiator, receiver, offeredItem, requestedItem;
 
     beforeAll(async () => {
-        // Connect to test database
-        await mongoose.connect(process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/trade_test', {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-
         // Create test users
         initiator = await User.create({
             name: 'Test Initiator',
@@ -47,7 +41,6 @@ describe('Trade Model Test', () => {
         await User.deleteMany({});
         await Item.deleteMany({});
         await Trade.deleteMany({});
-        await mongoose.connection.close();
     });
 
     beforeEach(async () => {

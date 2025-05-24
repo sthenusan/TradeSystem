@@ -2,17 +2,33 @@ const itemService = require('../services/itemService');
 
 // Get all items with pagination and filters
 exports.getItems = async (req, res) => {
+    if (!res || typeof res.render !== 'function') {
+        console.error('Invalid response object in getItems');
+        return;
+    }
+
     try {
-        const { items, currentPage, pages } = await itemService.getItemsService(req.query);
-        res.render('items/browseItem', {
-            items,
-            currentPage,
-            pages,
-            query: req.query,
+        const result = await itemService.getItemsService(req.query || {});
+        if (!result) {
+            return res.status(404).render('error', { 
+                message: 'No items found',
+                error: {}
+            });
+        }
+        
+        return res.render('items/browseItem', {
+            title: 'Browse Items',
+            items: result.items || [],
+            currentPage: result.currentPage || 1,
+            pages: result.pages || 1,
+            query: req.query || {}
         });
-    } catch (err) {
-        console.error(err);
-        res.status(500).render('error', { message: 'Server Error' });
+    } catch (error) {
+        console.error('Error in getItems:', error);
+        return res.status(500).render('error', {
+            message: 'Error fetching items',
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
     }
 };
 
