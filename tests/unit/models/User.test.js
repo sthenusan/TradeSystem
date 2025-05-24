@@ -3,18 +3,6 @@ const bcrypt = require('bcryptjs');
 const User = require('../../../models/User');
 
 describe('User Model Test', () => {
-    beforeAll(async () => {
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/barter-trading-test', {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-    });
-
-    afterAll(async () => {
-        await mongoose.connection.dropDatabase();
-        await mongoose.connection.close();
-    });
-
     beforeEach(async () => {
         await User.deleteMany({}); // Clear users before each test
     });

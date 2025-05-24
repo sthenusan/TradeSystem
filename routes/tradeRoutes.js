@@ -8,6 +8,7 @@ const User = require('../models/User');
 const multer = require('multer');
 const upload = multer();
 const mongoose = require('mongoose');
+const tradeController = require('../controllers/tradeController');
 
 // Helper function to determine if request is API
 const isApiRequest = (req) => {
@@ -323,5 +324,8 @@ router.delete('/:id', ensureAuthenticated, async (req, res) => {
         });
     }
 });
+
+// Rate trade partner
+router.post('/:id/rate', ensureAuthenticated, tradeController.rateTradePartner);
 
 module.exports = router; 

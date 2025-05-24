@@ -7,8 +7,38 @@ describe('Trade Model Test', () => {
     let initiator, receiver, offeredItem, requestedItem;
 
     beforeAll(async () => {
+<<<<<<< HEAD:tests/unit/models/trade.test.js
         // Connect to test database
         await mongoose.connect(process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/trade_test');
+=======
+        // Create test users
+        initiator = await User.create({
+            name: 'Test Initiator',
+            email: 'initiator@test.com',
+            password: 'password123'
+        });
+
+        receiver = await User.create({
+            name: 'Test Receiver',
+            email: 'receiver@test.com',
+            password: 'password123'
+        });
+
+        // Create test items
+        offeredItem = await Item.create({
+            title: 'Test Offered Item',
+            description: 'Test Description',
+            owner: initiator._id,
+            images: ['test-image.jpg']
+        });
+
+        requestedItem = await Item.create({
+            title: 'Test Requested Item',
+            description: 'Test Description',
+            owner: receiver._id,
+            images: ['test-image.jpg']
+        });
+>>>>>>> fix/trade-issues:tests/unit/trade.test.js
     });
 
     afterAll(async () => {
@@ -16,7 +46,6 @@ describe('Trade Model Test', () => {
         await User.deleteMany({});
         await Item.deleteMany({});
         await Trade.deleteMany({});
-        await mongoose.connection.close();
     });
 
     beforeEach(async () => {

@@ -4,9 +4,63 @@ const User = require('../../../models/User');
 const Item = require('../../../models/Item');
 const Trade = require('../../../models/Trade');
 
+// Connect to test database
+beforeAll(async () => {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/trade-system-test');
+});
+
+// Clean up database before each test
+beforeEach(async () => {
+    await Trade.deleteMany({});
+    await User.deleteMany({});
+    await Item.deleteMany({});
+    // Create test users
+    initiator = await User.create({
+        firstName: 'Test',
+        lastName: 'Initiator',
+        email: 'initiator@test.com',
+        password: 'password123'
+    });
+    receiver = await User.create({
+        firstName: 'Test',
+        lastName: 'Receiver',
+        email: 'receiver@test.com',
+        password: 'password123'
+    });
+    // Create test items
+    offeredItem = await Item.create({
+        title: 'Test Offered Item',
+        description: 'Test Description',
+        owner: initiator._id,
+        images: ['test-image.jpg'],
+        status: 'Available',
+        location: 'Test Location',
+        condition: 'Like New',
+        category: 'Electronics',
+        value: 100
+    });
+    requestedItem = await Item.create({
+        title: 'Test Requested Item',
+        description: 'Test Description',
+        owner: receiver._id,
+        images: ['test-image.jpg'],
+        status: 'Available',
+        location: 'Test Location',
+        condition: 'Good',
+        category: 'Books',
+        value: 100
+    });
+});
+
+// Close database connection after all tests
+afterAll(async () => {
+    await mongoose.connection.close();
+});
+
 describe('Trade Service Unit Test', () => {
     let initiator, receiver, offeredItem, requestedItem;
 
+<<<<<<< HEAD:tests/unit/models/tradeService.test.js
     beforeAll(async () => {
         await mongoose.connect(process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/trade_test');
     });
@@ -67,6 +121,8 @@ describe('Trade Service Unit Test', () => {
         console.log('[DEBUG] requestedItem:', requestedItem ? requestedItem._id : null);
     });
 
+=======
+>>>>>>> fix/trade-issues:tests/unit/tradeService.test.js
     describe('createTradeService', () => {
         it('should create a trade with valid data', async () => {
             const tradeData = {
@@ -129,6 +185,20 @@ describe('Trade Service Unit Test', () => {
             await expect(tradeService.createTradeService(tradeData))
                 .rejects
                 .toThrow('Items are not available for trade');
+        });
+
+        it('should throw error for empty message', async () => {
+            const tradeData = {
+                initiator: initiator._id,
+                receiverId: receiver._id,
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id],
+                message: ''
+            };
+
+            await expect(tradeService.createTradeService(tradeData))
+                .rejects
+                .toThrow('Message is required');
         });
     });
 
@@ -214,6 +284,14 @@ describe('Trade Service Unit Test', () => {
                 'Accepted'
             )).rejects.toThrow('Not authorized');
         });
+
+        it('should throw error for non-existent trade', async () => {
+            await expect(tradeService.updateTradeStatusService(
+                new mongoose.Types.ObjectId(),
+                receiver._id,
+                'Accepted'
+            )).rejects.toThrow('Trade not found');
+        });
     });
 
     describe('addMessageService', () => {
@@ -272,6 +350,14 @@ describe('Trade Service Unit Test', () => {
                 ''
             )).rejects.toThrow('Message content is required');
         });
+
+        it('should throw error for non-existent trade', async () => {
+            await expect(tradeService.addMessageService(
+                new mongoose.Types.ObjectId(),
+                receiver._id,
+                'Test message'
+            )).rejects.toThrow('Trade not found');
+        });
     });
 
     describe('getTradeService', () => {
@@ -286,12 +372,21 @@ describe('Trade Service Unit Test', () => {
             const tradeDetails = await tradeService.getTradeService(trade._id);
 
             expect(tradeDetails).toBeDefined();
+<<<<<<< HEAD:tests/unit/models/tradeService.test.js
             expect(tradeDetails.initiator).toBeDefined();
             expect(tradeDetails.receiver).toBeDefined();
+=======
+>>>>>>> fix/trade-issues:tests/unit/tradeService.test.js
             expect(tradeDetails.initiator.firstName).toBe('Test');
             expect(tradeDetails.initiator.lastName).toBe('Initiator');
             expect(tradeDetails.receiver.firstName).toBe('Test');
             expect(tradeDetails.receiver.lastName).toBe('Receiver');
+<<<<<<< HEAD:tests/unit/models/tradeService.test.js
+=======
+            expect(tradeDetails.offeredItems[0].title).toBe('Test Offered Item');
+            expect(tradeDetails.requestedItems[0].title).toBe('Test Requested Item');
+            expect(tradeDetails.messages[0].content).toBe('Test message');
+>>>>>>> fix/trade-issues:tests/unit/tradeService.test.js
         });
 
         it('should throw error for non-existent trade', async () => {

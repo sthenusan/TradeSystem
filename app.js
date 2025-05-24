@@ -103,6 +103,7 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
+<<<<<<< HEAD
 // API Routes
 app.use('/api/trades', require('./routes/tradeRoutes'));
 app.use('/api/items', require('./routes/itemRoutes'));
@@ -114,6 +115,14 @@ app.use('/trades', require('./routes/tradeRoutes'));
 app.use('/items', require('./routes/itemRoutes'));
 app.use('/users', require('./routes/userRoutes'));
 app.use('/ratings', require('./routes/ratingRoutes'));
+=======
+// Routes
+app.use('/', require('./routes/index'));
+app.use('/users', require('./routes/userRoutes'));
+app.use('/trades', require('./routes/tradeRoutes'));
+app.use('/items', require('./routes/itemRoutes'));
+app.use('/notifications', require('./routes/notificationRoutes'));
+>>>>>>> fix/trade-issues
 
 // Mount index.js router for root path
 app.use('/', require('./routes/index'));
@@ -142,7 +151,11 @@ app.use((req, res, next) => {
 // Global error handler
 app.use(require('./middleware/errorHandler'));
 
+<<<<<<< HEAD
 // Start server only if this file is run directly
+=======
+// Only start the server if this file is run directly
+>>>>>>> fix/trade-issues
 if (require.main === module) {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
