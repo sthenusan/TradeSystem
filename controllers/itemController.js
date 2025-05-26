@@ -86,18 +86,18 @@ exports.createItem = async (req, res) => {
 // Update item
 exports.updateItem = async (req, res) => {
     try {
-        const { title, description, category, condition, location } = req.body;
+        const { title, description, category, condition, location, status } = req.body;
         const images = Array.isArray(req.files) && req.files.length > 0 ? req.files.map(file => file.filename) : undefined;
         const item = await itemService.updateItemService(
             req.params.id,
             req.user.id,
-            { title, description, category, condition, location, images }
+            { title, description, category, condition, location, images, status }
         );
         if (!item) {
             return res.status(404).render('error', { message: 'Item not found' });
         }
         req.flash('success_msg', 'Item updated successfully');
-        res.redirect(`/items/${item._id}`);
+        res.redirect(`/items/manage`);
     } catch (err) {
         console.error(err);
         res.status(500).render('error', { message: 'Server Error' });
