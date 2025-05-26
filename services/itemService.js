@@ -154,6 +154,16 @@ async function getUserItemsWithFilters(userId, filters = {}) {
     return await Item.find(query).sort({ createdAt: -1 });
 }
 
+// Bulk delete items by IDs and owner
+async function deleteItemsByIdsAndOwner(ids, ownerId) {
+    return await Item.deleteMany({ _id: { $in: ids }, owner: ownerId });
+}
+
+// Bulk update items by IDs and owner
+async function updateItemsByIdsAndOwner(ids, ownerId, update) {
+    return await Item.updateMany({ _id: { $in: ids }, owner: ownerId }, { $set: update });
+}
+
 module.exports = {
     getItemsService,
     getItemService,
@@ -168,5 +178,7 @@ module.exports = {
     deleteItem,
     updateItemsStatus,
     countUserItemsByStatus,
-    getUserItemsWithFilters
+    getUserItemsWithFilters,
+    deleteItemsByIdsAndOwner,
+    updateItemsByIdsAndOwner
 }; 
