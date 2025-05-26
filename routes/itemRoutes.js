@@ -91,8 +91,10 @@ router.get('/create', (req, res) => {
     });
 });
 
-// Get single item
-router.get('/:id', itemController.getItem);
+// API: Bulk delete items
+router.post('/api/bulk-delete', ensureAuthenticated, itemController.bulkDeleteItemsApi);
+// API: Bulk update items
+router.post('/api/bulk-update', ensureAuthenticated, itemController.bulkUpdateItemsApi);
 
 // Edit item form
 router.get('/:id/edit', ensureAuthenticated, async (req, res) => {
@@ -106,7 +108,7 @@ router.get('/:id/edit', ensureAuthenticated, async (req, res) => {
             return res.status(404).render('error', { message: 'Item not found' });
         }
 
-        res.render('items/edit', {
+        res.render('items/editItem', {
             title: 'Edit Item',
             item
         });
@@ -116,38 +118,13 @@ router.get('/:id/edit', ensureAuthenticated, async (req, res) => {
     }
 });
 
+// Get single item
+router.get('/:id', itemController.getItem);
+
 // Update item
 router.put('/:id', ensureAuthenticated, upload.array('images', 5), itemController.updateItem);
 
 // Delete item
 router.delete('/:id', ensureAuthenticated, itemController.deleteItem);
-
-// Get browse items page
-router.get('/browse', async (req, res) => {
-    try {
-        const { items, currentPage, pages } = await itemService.getItemsService(req.query);
-
-        res.render('items/browse', {
-            title: 'Browse Items',
-            items: items,
-            currentPage: currentPage,
-            pages: pages,
-            query: req.query,
-            user: req.user
-        });
-    } catch (error) {
-        console.error('Error fetching items:', error);
-        res.status(500).render('error', {
-            title: 'Error',
-            msg: 'Failed to fetch items',
-            error: error
-        });
-    }
-});
-
-// API: Bulk delete items
-router.post('/api/bulk-delete', ensureAuthenticated, itemController.bulkDeleteItemsApi);
-// API: Bulk update items
-router.post('/api/bulk-update', ensureAuthenticated, itemController.bulkUpdateItemsApi);
 
 module.exports = router; 

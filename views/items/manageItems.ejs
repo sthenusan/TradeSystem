@@ -168,8 +168,6 @@
             position: absolute;
             top: 14px;
             left: 14px;
-            background: #d1fae5;
-            color: #059669;
             font-size: 0.92rem;
             font-weight: 400;
             border-radius: 999px;
@@ -177,6 +175,21 @@
             z-index: 2;
             text-transform: lowercase;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+        }
+
+        .status-badge.available {
+            background: #d1fae5 !important;
+            color: #059669 !important;
+        }
+
+        .status-badge.pending {
+            background: #fef9c3 !important;
+            color: #cf9d0a !important;
+        }
+
+        .status-badge.traded {
+            background: #e5e7eb !important;
+            color: #374151 !important;
         }
 
         .card-actions-top {
@@ -474,9 +487,9 @@
                     Are you sure you want to delete this item? This action cannot be undone.
                 </p>
                 <div style="display:flex; gap:12px; justify-content:center;">
-                    <button id="cancelDeleteBtn" class="btn-flat"
+                    <button id="cancelDeleteBtn" class="btn"
                         style="color:#64748b; background:#f3f4f6; border-radius:6px;">Cancel</button>
-                    <button id="confirmDeleteBtn" class="btn"
+                    <button id="confirmDeleteBtn" class="btn-flat"
                         style="background:#ef4444; color:#fff; border-radius:6px;">Delete</button>
                 </div>
             </div>

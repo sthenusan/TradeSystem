@@ -58,13 +58,14 @@ async function createItemService({ title, description, category, condition, loca
 }
 
 // Update item
-async function updateItemService(itemId, ownerId, { title, description, category, condition, location, images }) {
+async function updateItemService(itemId, ownerId, { title, description, category, condition, location, images, status }) {
     const updateData = {
         title,
         description,
         category,
         condition,
         location,
+        status
     };
     if (images && images.length > 0) updateData.images = images;
     const item = await Item.findOneAndUpdate(
