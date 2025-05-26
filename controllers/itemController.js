@@ -69,7 +69,7 @@ exports.createItem = async (req, res) => {
         }
 
         req.flash('success_msg', 'Item created successfully');
-        res.redirect('/items');
+        res.redirect('/items/manage');
     } catch (err) {
         console.error(err);
         if (req.xhr || req.headers.accept?.includes('application/json')) {
@@ -112,7 +112,7 @@ exports.deleteItem = async (req, res) => {
             return res.status(404).render('error', { message: 'Item not found' });
         }
         req.flash('success_msg', 'Item deleted successfully');
-        res.redirect('/items');
+        res.redirect('/items/manage');
     } catch (err) {
         console.error(err);
         res.status(500).render('error', { message: 'Server Error' });
@@ -143,5 +143,33 @@ exports.getManageItems = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).render('error', { message: 'Server Error' });
+    }
+};
+
+// API: Bulk delete items
+exports.bulkDeleteItemsApi = async (req, res) => {
+    try {
+        const { ids } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ success: false, message: 'No items selected' });
+        }
+        await itemService.deleteItemsByIdsAndOwner(ids, req.user._id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// API: Bulk update items
+exports.bulkUpdateItemsApi = async (req, res) => {
+    try {
+        const { ids, update } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0 || typeof update !== 'object') {
+            return res.status(400).json({ success: false, message: 'Invalid input' });
+        }
+        await itemService.updateItemsByIdsAndOwner(ids, req.user._id, update);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 }; 

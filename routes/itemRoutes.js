@@ -145,4 +145,9 @@ router.get('/browse', async (req, res) => {
     }
 });
 
+// API: Bulk delete items
+router.post('/api/bulk-delete', ensureAuthenticated, itemController.bulkDeleteItemsApi);
+// API: Bulk update items
+router.post('/api/bulk-update', ensureAuthenticated, itemController.bulkUpdateItemsApi);
+
 module.exports = router; 
