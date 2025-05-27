@@ -6,9 +6,10 @@ module.exports = function (passport) {
     passport.use(
         new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
             try {
-                console.log("🔐 Incoming login attempt:");
-                console.log("   Email:", email);
-                console.log("   Password (raw):", password);
+                if (process.env.NODE_ENV !== 'production') {
+                    console.log("🔐 Incoming login attempt:");
+                    console.log("   Email:", email);
+                }
 
                 // Convert email to lowercase for case-insensitive match
                 const user = await User.findOne({ email: email.toLowerCase() });
