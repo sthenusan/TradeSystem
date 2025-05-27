@@ -3,7 +3,6 @@ module.exports = {
     setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
     testMatch: [
         '**/tests/**/*.test.js',
-        '!**/tests/e2e/**',
         '!**/cypress/**'
     ],
     verbose: true,
