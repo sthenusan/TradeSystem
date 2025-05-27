@@ -14,6 +14,13 @@ exports.getMessagesByTrade = async (req, res) => {
 exports.sendMessage = async (req, res) => {
   try {
     const { recipientId, tradeId, content } = req.body;
+    
+    // Verify that the user is authorized to send a message for the trade
+    const trade = await Trade.findById(tradeId);
+    if (!trade || (trade.initiator.toString() !== req.user._id && trade.receiver.toString() !== req.user._id)) {
+      return res.status(403).json({ error: 'Unauthorized to send messages for this trade.' });
+    }
+    
     const message = await Message.create({
       sender: req.user._id,
       recipient: recipientId,
