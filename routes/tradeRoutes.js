@@ -55,9 +55,27 @@ router.get('/', ensureAuthenticated, async (req, res) => {
 // Create trade
 router.post('/', ensureAuthenticated, upload.none(), async (req, res) => {
     try {
-        const { receiverId, offeredItems, requestedItems, message } = req.body;
+        console.log('\n=== TRADE CREATION REQUEST ===');
+        console.log('Request Body:', JSON.stringify(req.body, null, 2));
+
+        // Parse JSON strings back into arrays
+        const requestedItems = JSON.parse(req.body.requestedItems);
+        const offeredItems = JSON.parse(req.body.offeredItems);
+        const receiverId = req.body.receiverId;
+        const message = req.body.message;
+
+        console.log('\nParsed Values:');
+        console.log('- requestedItems:', requestedItems);
+        console.log('- offeredItems:', offeredItems);
+        console.log('- receiverId:', receiverId);
+        console.log('- message:', message);
 
         if (!receiverId || !offeredItems || !requestedItems) {
+            console.log('\nMissing Fields Check:');
+            console.log('- receiverId missing:', !receiverId);
+            console.log('- offeredItems missing:', !offeredItems);
+            console.log('- requestedItems missing:', !requestedItems);
+            
             if (isApiRequest(req)) {
                 return res.status(400).json({ error: 'Missing required fields' });
             }
