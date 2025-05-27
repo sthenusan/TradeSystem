@@ -10,13 +10,6 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Debug log for email configuration
-console.log('Email Configuration:', {
-    service: process.env.EMAIL_SERVICE || 'gmail',
-    user: process.env.EMAIL_USER ? 'Set' : 'Not Set',
-    password: process.env.EMAIL_PASSWORD ? 'Set' : 'Not Set'
-});
-
 // Verify transporter connection
 const verifyTransporter = async () => {
     try {

@@ -148,22 +148,12 @@
             .filter(id => id && objectIdPattern.test(id));
         const requestedItem = document.getElementById('requestedItemId').value;
 
-        // Debug logs
-        console.log('=== TRADE PROPOSAL FORM SUBMISSION ===');
-        console.log('Initial Form Data:');
-        console.log('- requestedItems:', requestedItem);
-        console.log('- offeredItems:', offeredItems);
-        console.log('- receiverId:', document.getElementById('receiverId').value);
-        console.log('- message:', document.getElementById('message').value);
-
         if (offeredItems.length === 0) {
-            console.log('Validation Failed: No items selected to offer');
             M.toast({ html: 'Please select at least one valid item to offer' });
             return;
         }
 
         if (!requestedItem || !objectIdPattern.test(requestedItem)) {
-            console.log('Validation Failed: Invalid requested item');
             M.toast({ html: 'Invalid requested item' });
             return;
         }
@@ -177,14 +167,7 @@
         formData.append('receiverId', document.getElementById('receiverId').value);
         formData.append('message', document.getElementById('message').value);
 
-        // Log final form data
-        console.log('Final Form Data Being Sent:');
-        for (let pair of formData.entries()) {
-            console.log(`- ${pair[0]}: ${pair[1]}`);
-        }
-
         // Submit form
-        console.log('Sending request to /trades...');
         fetch('/trades', {
             method: 'POST',
             body: formData,
@@ -193,10 +176,8 @@
             }
         })
             .then(response => {
-                console.log('Response status:', response.status);
                 if (!response.ok) {
                     return response.text().then(text => {
-                        console.log('Error response text:', text);
                         try {
                             // Try to parse as JSON
                             const data = JSON.parse(text);
@@ -210,14 +191,12 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Success response:', data);
                 // Since the trade is created successfully, we can proceed
                 M.toast({ html: 'Trade proposal sent successfully' });
                 closeTradeModal();
                 window.location.href = '/trades';
             })
             .catch(error => {
-                console.error('Error details:', error);
                 M.toast({ html: error.message || 'Error sending trade proposal' });
             });
     });
