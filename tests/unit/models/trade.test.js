@@ -64,6 +64,17 @@ describe('Trade Model Test', () => {
         });
     });
 
+    afterAll(async () => {
+        // Clean up test data
+        await User.deleteMany({});
+        await Item.deleteMany({});
+        await Trade.deleteMany({});
+    });
+
+    beforeEach(async () => {
+        await Trade.deleteMany({});
+    });
+
     it('should create a trade successfully', async () => {
         const tradeData = {
             initiator: initiator._id,

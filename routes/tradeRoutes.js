@@ -8,6 +8,7 @@ const User = require('../models/User');
 const multer = require('multer');
 const upload = multer();
 const mongoose = require('mongoose');
+const tradeController = require('../controllers/tradeController');
 
 // Helper function to determine if request is API
 const isApiRequest = (req) => {
@@ -54,7 +55,11 @@ router.get('/', ensureAuthenticated, async (req, res) => {
 // Create trade
 router.post('/', ensureAuthenticated, upload.none(), async (req, res) => {
     try {
-        const { receiverId, offeredItems, requestedItems, message } = req.body;
+        // Parse JSON strings back into arrays
+        const requestedItems = JSON.parse(req.body.requestedItems);
+        const offeredItems = JSON.parse(req.body.offeredItems);
+        const receiverId = req.body.receiverId;
+        const message = req.body.message;
 
         if (!receiverId || !offeredItems || !requestedItems) {
             if (isApiRequest(req)) {
@@ -323,5 +328,8 @@ router.delete('/:id', ensureAuthenticated, async (req, res) => {
         });
     }
 });
+
+// Rate trade partner
+router.post('/:id/rate', ensureAuthenticated, tradeController.rateTradePartner);
 
 module.exports = router; 

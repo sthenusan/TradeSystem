@@ -1,6 +1,5 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -8,48 +7,28 @@ const flash = require('connect-flash');
 const path = require('path');
 const User = require('../../models/User');
 
-let mongoServer;
 let app;
 
-// Disconnect any existing connections before tests
 beforeAll(async () => {
-    if (mongoose.connection.readyState !== 0) {
-        await mongoose.disconnect();
-    }
-    
-    // Create an in-memory MongoDB instance
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    });
-
     // Create Express app for testing
     app = express();
-    
     // Set up view engine
     app.set('view engine', 'ejs');
     app.set('views', path.join(__dirname, '../../views'));
-    
     // Body parser
     app.use(express.urlencoded({ extended: true }));
     app.use(express.json());
-
     // Express session
     app.use(session({
         secret: 'test-secret',
         resave: true,
         saveUninitialized: true
     }));
-
     // Passport middleware
     app.use(passport.initialize());
     app.use(passport.session());
-
     // Connect flash
     app.use(flash());
-
     // Global variables
     app.use((req, res, next) => {
         res.locals.success_msg = req.flash('success_msg');
@@ -57,7 +36,6 @@ beforeAll(async () => {
         res.locals.error = req.flash('error');
         next();
     });
-
     // Page context middleware
     app.use((req, res, next) => {
         res.locals.user = req.user || null;
@@ -65,14 +43,13 @@ beforeAll(async () => {
         res.locals.currentPage = path.split('/')[1] || '';
         next();
     });
-
     // Configure passport
     require('../../config/passport')(passport);
-
     // Routes
     app.use('/users', require('../../routes/userRoutes'));
-    app.use('/', require('../../routes/index'));
+});
 
+afterAll(async () => {
     // Error handler for tests
     app.use((err, req, res, next) => {
         console.error(err.stack);
