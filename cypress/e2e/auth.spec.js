@@ -58,14 +58,17 @@ describe('Authentication', () => {
         cy.get('input[name="password"]').type('wrongpassword');
         cy.get('button[type="submit"]').click();
         
-        // Verify error message - could be either "email not registered" or "password incorrect"
+        // Verify error message
         cy.url().should('include', '/users/login');
-        cy.get('.card-panel.red.lighten-4')
+        cy.get('.card-panel.red.lighten-4.red-text.text-darken-4')
             .should('exist')
-            .and('satisfy', ($el) => {
+            .and(($el) => {
                 const text = $el.text();
-                return text.includes('That email is not registered') || 
-                       text.includes('Password incorrect');
+                expect(
+                  text.includes('Incorrect email') ||
+                  text.includes('Incorrect password') ||
+                  text.includes('That email is not registered')
+                ).to.be.true;
             });
     });
 

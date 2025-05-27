@@ -56,7 +56,8 @@ exports.createItem = async (req, res) => {
             condition,
             location,
             images,
-            owner
+            owner,
+            status: 'Available'
         });
 
         if (req.xhr || req.headers.accept?.includes('application/json')) {
@@ -68,9 +69,7 @@ exports.createItem = async (req, res) => {
         }
 
         req.flash('success_msg', 'Item created successfully');
-        // TODO: Redirect to the manage items page
-        // res.redirect(`/items/${newItem._id}`);
-        res.redirect('/');
+        res.redirect('/items');
     } catch (err) {
         console.error(err);
         if (req.xhr || req.headers.accept?.includes('application/json')) {

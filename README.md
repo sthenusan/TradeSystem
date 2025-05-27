@@ -2,20 +2,23 @@
 
 A modern web application for barter trading, allowing users to exchange goods and services.
 
+## Overview
+This project is a barter trading system that allows users to trade items with each other. It includes features for user authentication, item management, trade creation, and more.
+
 ## Features
 
-- User authentication and authorization
-- Item listing and management
-- Search and filter functionality
-- Real-time messaging between users
-- Trade proposal and negotiation system
-- User ratings and reviews
-- Responsive design for all devices
+- **User Authentication:** Register, login, and manage user profiles
+- **Item Management:** Create, update, and delete items for trade
+- **Trade Creation:** Propose trades between users with offered and requested items
+- **Trade Status Updates:** Accept or reject trades, which updates the status of the items involved
+- **Messaging:** Users can send messages within a trade to communicate
+- **Search and Filter:** Advanced search and filtering functionality
+- **User Ratings:** Rate and review other users
+- **Responsive Design:** Works on all devices
 
 ## Tech Stack
 
 ### Frontend
-
 - HTML5
 - CSS3
 - JavaScript (ES6+)
@@ -23,14 +26,12 @@ A modern web application for barter trading, allowing users to exchange goods an
 - EJS (Embedded JavaScript) templating
 
 ### Backend
-
 - Node.js
 - Express.js
 - MongoDB with Mongoose ODM
 - RESTful API
 
 ### Testing
-
 - Unit Testing: Jest, Mocha, Chai
 - UI Testing: Cypress
 - End-to-End Testing: Cypress
@@ -68,47 +69,41 @@ barter-trading-system/
 ### Installation
 
 1. Clone the repository
-
 ```bash
 git clone [repository-url]
 cd barter-trading-system
 ```
 
 2. Install dependencies
-
 ```bash
 npm install
 ```
 
 3. Set up local environment variables (OPTIONAL)
-
 ```bash
 cp .env.example .env
 ```
 
-4. Install MongoDB
+### Running the Application
 
-- On Windows:
+1. Install MongoDB
 
-  - Download the MongoDB Community Server from the [official website](https://www.mongodb.com/try/download/community).
-  - Run the installer and follow the setup instructions.
-  - After installation, you can start MongoDB as a Windows service or run it manually from the command prompt:
+- **On Windows:**
+  - Download the MongoDB Community Server from the [official website](https://www.mongodb.com/try/download/community)
+  - Run the installer and follow the setup instructions
+  - Start MongoDB:
     ```bash
-    "C:\Program Files\MongoDB\Server\<version>\bin\mongod.exe"
+    net start MongoDB
     ```
 
-- On MacOS:
-
+- **On MacOS:**
   ```bash
   brew tap mongodb/brew
   brew install mongodb-community
   brew services start mongodb-community
   ```
 
-  This will install and start MongoDB as a background service.
-
-- On Ubuntu:
-
+- **On Ubuntu:**
   ```bash
   sudo apt update
   sudo apt install -y gnupg
@@ -120,70 +115,51 @@ cp .env.example .env
   sudo systemctl enable mongod
   ```
 
-  This will install and start MongoDB as a service.
-
-- To verify MongoDB is running:
-  ```bash
-  mongo --eval 'db.runCommand({ connectionStatus: 1 })'
-  ```
-  You should see a response with `"ok" : 1`.
-
-### Run & Test
-
-#### 1. Start & Stop MongoDB
-
-- **On Windows**
-
-  - Start MongoDB (as a service):
-    ```bash
-    net start MongoDB
-    ```
-  - Stop MongoDB (as a service):
-    ```bash
-    net stop MongoDB
-    ```
-  - Or run manually (if not installed as a service):
-    ```bash
-    "C:\Program Files\MongoDB\Server\<version>\bin\mongod.exe"
-    ```
-
-- **On macOS** (with Homebrew)
-
-  - Start MongoDB:
-    ```bash
-    brew services start mongodb-community
-    ```
-  - Stop MongoDB:
-    ```bash
-    brew services stop mongodb-community
-    ```
-
-- **On Ubuntu/Linux**
-  - Start MongoDB:
-    ```bash
-    sudo systemctl start mongod
-    ```
-  - Stop MongoDB:
-    ```bash
-    sudo systemctl stop mongod
-    ```
-  - Check status:
-    ```bash
-    sudo systemctl status mongod
-    ```
-
-#### 2. Start the development server
-
+2. Start the development server
 ```bash
 npm run dev
 ```
 
-#### 3. Run tests
+### Running Tests
 
+1. Unit Tests
 ```bash
-npm test           # Run unit tests
-npm run test:ui    # Run UI tests
-npm run test:e2e   # Run end-to-end tests
+npm test
+```
+
+2. UI Tests
+```bash
+npm run test:ui
+```
+
+3. End-to-End Tests
+```bash
+npm run test:e2e
+```
+
+4. Run Tests Serially (recommended to avoid race conditions)
+```bash
+npm test -- --runInBand
+```
+
+### Troubleshooting
+
+#### MongoDB Connection Issues
+1. Check MongoDB status:
+```bash
+mongo --eval 'db.runCommand({ connectionStatus: 1 })'
+```
+
+2. Verify MongoDB is running:
+```bash
+# On Windows
+net start MongoDB
+
+# On MacOS
+brew services list | grep mongodb
+
+# On Ubuntu
+sudo systemctl status mongod
 ```
 
 ## API Documentation

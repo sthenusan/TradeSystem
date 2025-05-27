@@ -3,6 +3,8 @@ const User = require('../models/User');
 const fs = require('fs').promises;
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const { generateVerificationCode, sendVerificationEmail } = require('../services/emailService');
+const transporter = require('../services/emailService').transporter;
 
 // Get user profile
 exports.getProfile = async (req, res) => {
@@ -29,6 +31,7 @@ exports.updateProfile = async (req, res) => {
 
         // Get current user
         const user = await User.findById(req.user.id);
+        console.log('[DEBUG] Loaded user:', user ? user.email : 'not found');
         
         // Check if email is being changed and if it's already taken
         if (email !== user.email) {
@@ -40,20 +43,21 @@ exports.updateProfile = async (req, res) => {
         }
 
         // Basic update data
-        const updateData = {
-            firstName,
-            lastName,
-            email: email.toLowerCase(),
-            phone,
-            bio,
-            location,
-            website
-        };
+        const updateData = {};
+        
+        if (firstName) updateData.firstName = firstName;
+        if (lastName) updateData.lastName = lastName;
+        if (email) updateData.email = email.toLowerCase();
+        if (phone) updateData.phone = phone;
+        if (bio) updateData.bio = bio;
+        if (location) updateData.location = location;
+        if (website) updateData.website = website;
 
         // Handle password change if requested
         if (currentPassword && newPassword) {
             // Validate current password
             const isMatch = await user.comparePassword(currentPassword);
+            console.log('[DEBUG] Current password match:', isMatch);
             if (!isMatch) {
                 req.flash('error_msg', 'Current password is incorrect');
                 return res.redirect('/users/profile');
@@ -72,9 +76,10 @@ exports.updateProfile = async (req, res) => {
                 return res.redirect('/users/profile');
             }
 
-            // Hash new password
-            const salt = await bcrypt.genSalt(10);
-            updateData.password = await bcrypt.hash(newPassword, salt);
+            // Update password directly on the user object
+            user.password = newPassword;
+            await user.save();
+            console.log('[DEBUG] Password updated and saved for user:', user.email);
         }
 
         // Handle profile picture upload
@@ -103,12 +108,24 @@ exports.updateProfile = async (req, res) => {
             updateData.profilePicture = req.file.filename;
         }
 
-        // Update user
-        await User.findByIdAndUpdate(req.user.id, updateData, { new: true });
+        // Update other user data
+        if (Object.keys(updateData).length > 0) {
+            const updatedUser = await User.findByIdAndUpdate(
+                req.user.id,
+                { $set: updateData },
+                { new: true }
+            );
+
+            if (!updatedUser) {
+                req.flash('error_msg', 'Error updating profile');
+                return res.redirect('/users/profile');
+            }
+        }
+
         req.flash('success_msg', 'Profile updated successfully');
         res.redirect('/users/profile');
     } catch (err) {
-        console.error(err);
+        console.error('Error updating profile:', err);
         req.flash('error_msg', 'Error updating profile');
         res.redirect('/users/profile');
     }
@@ -163,5 +180,81 @@ exports.deleteAccount = async (req, res) => {
         console.error(err);
         req.flash('error_msg', 'Error deleting account');
         res.redirect('/users/profile');
+    }
+};
+
+// Send verification email
+exports.sendVerificationEmail = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        
+        if (user.isEmailVerified) {
+            return res.json({ 
+                status: 'error',
+                message: 'Your email is already verified'
+            });
+        }
+
+        // Generate new verification code
+        const code = generateVerificationCode();
+        const codeExpiry = new Date();
+        codeExpiry.setMinutes(codeExpiry.getMinutes() + 10); // Code expires in 10 minutes
+
+        // Save code to user
+        user.verificationCode = code;
+        user.verificationCodeExpires = codeExpiry;
+        await user.save();
+        
+        // Send verification email
+        await sendVerificationEmail(user, code);
+
+        res.json({
+            status: 'success',
+            message: 'Verification code sent. Please check your email.'
+        });
+    } catch (err) {
+        console.error('Error sending verification email:', err);
+        res.json({
+            status: 'error',
+            message: 'Error sending verification code'
+        });
+    }
+};
+
+// Verify email with code
+exports.verifyEmailWithCode = async (req, res) => {
+    try {
+        const { code } = req.body;
+        
+        // Find user with matching code that hasn't expired
+        const user = await User.findOne({
+            _id: req.user.id,
+            verificationCode: code,
+            verificationCodeExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.json({
+                status: 'error',
+                message: 'Invalid or expired verification code'
+            });
+        }
+
+        // Update user verification status
+        user.isEmailVerified = true;
+        user.verificationCode = undefined;
+        user.verificationCodeExpires = undefined;
+        await user.save();
+
+        res.json({
+            status: 'success',
+            message: 'Email verified successfully!'
+        });
+    } catch (err) {
+        console.error('Error verifying email:', err);
+        res.json({
+            status: 'error',
+            message: 'Error verifying email'
+        });
     }
 }; 

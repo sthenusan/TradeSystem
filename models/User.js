@@ -29,6 +29,16 @@ const UserSchema = new mongoose.Schema({
     required: true,
     minlength: 8
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationCode: {
+    type: String
+  },
+  verificationCodeExpires: {
+    type: Date
+  },
   profilePicture: {
     type: String,
     default: "default-profile.png"
@@ -51,7 +61,18 @@ const UserSchema = new mongoose.Schema({
   website: {
     type: String,
     trim: true,
-    match: [/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/, 'Please enter a valid URL']
+    validate: {
+      validator: function(v) {
+        if (!v) return true; // Allow empty values
+        try {
+          new URL(v);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      },
+      message: 'Please enter a valid URL'
+    }
   },
   rating: {
     type: Number,
@@ -63,6 +84,10 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  averageRating: {
+    type: Number,
+    default: 0
   },
   createdAt: {
     type: Date,
@@ -118,7 +143,11 @@ UserSchema.pre('findOneAndUpdate', async function(next) {
 
 // Method to compare password
 UserSchema.methods.comparePassword = async function(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw error;
+  }
 };
 
 module.exports = mongoose.model("User", UserSchema);

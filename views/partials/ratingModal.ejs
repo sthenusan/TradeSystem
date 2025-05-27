@@ -1,0 +1,93 @@
+<!-- Rating Modal -->
+<div id="ratingModal" class="modal"
+    style="max-width: 400px; width: 95vw; position: absolute; z-index: 1100; display: none;">
+    <div class="modal-content" style="padding: 24px;">
+        <h5 id="ratingModalTitle">Rate User</h5>
+        <form id="ratingForm">
+            <input type="hidden" name="tradeId" id="ratingTradeId">
+            <input type="hidden" name="toUserId" id="ratingToUserId">
+            <div class="star-rating" style="font-size: 2rem; margin: 16px 0;">
+                <% for (let i=1; i <=5; i++) { %>
+                    <span class="star" data-value="<%= i %>" style="cursor:pointer; color:#ccc;">&#9733;</span>
+                    <% } %>
+            </div>
+            <div class="input-field">
+                <textarea name="comment" id="ratingComment" class="materialize-textarea"
+                    placeholder="Optional comment..."></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn grey" onclick="closeRatingModal()">Cancel</button>
+                <button type="submit" class="btn green">Submit Rating</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .star-rating .star.selected {
+        color: #FFD600;
+    }
+</style>
+
+<script>
+    let selectedRating = 0;
+    function openRatingModal(tradeId, toUserId, firstName, btn) {
+        const modal = document.getElementById('ratingModal');
+        document.getElementById('ratingTradeId').value = tradeId;
+        document.getElementById('ratingToUserId').value = toUserId;
+        document.getElementById('ratingModalTitle').textContent = `Rate ${firstName}`;
+        document.body.style.overflow = 'hidden';
+        selectedRating = 0;
+        document.querySelectorAll('#ratingModal .star').forEach(star => star.classList.remove('selected'));
+        document.getElementById('ratingComment').value = '';
+        // Position modal near the button
+        if (btn) {
+            const rect = btn.getBoundingClientRect();
+            modal.style.top = `${rect.bottom + window.scrollY + 8}px`;
+            modal.style.left = `${rect.left + window.scrollX}px`;
+        } else {
+            modal.style.top = '50%';
+            modal.style.left = '50%';
+            modal.style.transform = 'translate(-50%, -50%)';
+        }
+        modal.style.display = 'block';
+    }
+    function closeRatingModal() {
+        document.getElementById('ratingModal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    document.querySelectorAll('#ratingModal .star').forEach(star => {
+        star.addEventListener('click', function () {
+            selectedRating = parseInt(this.getAttribute('data-value'));
+            document.querySelectorAll('#ratingModal .star').forEach((s, idx) => {
+                s.classList.toggle('selected', idx < selectedRating);
+            });
+        });
+    });
+    document.getElementById('ratingForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const tradeId = document.getElementById('ratingTradeId').value;
+        const toUserId = document.getElementById('ratingToUserId').value;
+        const comment = document.getElementById('ratingComment').value;
+        if (!selectedRating) {
+            M.toast({ html: 'Please select a rating.' });
+            return;
+        }
+        fetch(`/trades/${tradeId}/rate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ toUserId, rating: selectedRating, comment })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    M.toast({ html: 'Rating submitted!' });
+                    closeRatingModal();
+                    window.location.reload();
+                } else {
+                    M.toast({ html: data.message || 'Error submitting rating.' });
+                }
+            })
+            .catch(() => M.toast({ html: 'Error submitting rating.' }));
+    });
+</script>
