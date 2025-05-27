@@ -852,7 +852,7 @@ exports.rateTradePartner = async (req, res) => {
         }
         
         // Determine if user is initiator or receiver
-        const isInitiator = trade.initiator.toString() === req.user.id;
+        const isInitiator = trade.initiator.toString() === req.user._id.toString();
         const ratingField = isInitiator ? 'initiatorRating' : 'receiverRating';
         
         // Check if already rated

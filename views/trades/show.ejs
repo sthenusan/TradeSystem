@@ -140,7 +140,8 @@
                         <div class="card-content">
                             <span class="card-title">
                                 Trade with <%= trade.initiator._id.toString()===user._id.toString() ?
-                                    trade.receiver.name : trade.initiator.name %>
+                                    `${trade.receiver.firstName} ${trade.receiver.lastName}` :
+                                    `${trade.initiator.firstName} ${trade.initiator.lastName}` %>
                             </span>
 
                             <div class="trade-status status-<%= trade.status.toLowerCase() %>">

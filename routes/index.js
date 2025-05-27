@@ -26,17 +26,17 @@ router.get('/', (req, res) => {
 // Dashboard route
 router.get('/dashboard', ensureAuthenticated, async (req, res) => {
     try {
-        // Temporarily disabled activity fetching for testing
-        // const recentActivity = await Activity.find({ user: req.user._id })
-        //     .sort({ createdAt: -1 })
-        //     .limit(5)
-        //     .populate('relatedTrade', 'status')
-        //     .populate('relatedItem', 'title');
+        const recentActivity = await Activity.find({ user: req.user._id })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .populate('relatedTrade', 'status')
+            .populate('relatedItem', 'title');
+        
 
-        res.render('dashboard', {
-            title: 'Dashboard',
+    res.render('dashboard', {
+        title: 'Dashboard',
             user: req.user,
-            recentActivity: [] // Temporarily passing empty array
+            recentActivity: recentActivity
         });
     } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -44,7 +44,7 @@ router.get('/dashboard', ensureAuthenticated, async (req, res) => {
             title: 'Dashboard',
             user: req.user,
             recentActivity: []
-        });
+    });
     }
 });
 

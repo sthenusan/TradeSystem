@@ -159,6 +159,145 @@ router.post('/', ensureAuthenticated, upload.none(), async (req, res) => {
     }
 });
 
+// Update trade status
+router.post('/:id/status', ensureAuthenticated, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const trade = await Trade.findById(req.params.id);
+
+        if (!trade) {
+            if (isApiRequest(req)) {
+                return res.status(404).json({ error: 'Trade not found' });
+            }
+            return res.status(404).render('error', {
+                title: 'Error',
+                message: 'Trade not found'
+            });
+        }
+
+        // Check if user is authorized to update status
+        if (trade.receiver.toString() !== req.user._id.toString()) {
+            if (isApiRequest(req)) {
+                return res.status(403).json({ error: 'Not authorized to update trade status' });
+            }
+            return res.status(403).render('error', {
+                title: 'Error',
+                message: 'Not authorized to update trade status'
+            });
+        }
+
+        if (!['Pending', 'Accepted', 'Rejected', 'Completed', 'Cancelled'].includes(status)) {
+            if (isApiRequest(req)) {
+                return res.status(400).json({ error: 'Invalid status value' });
+            }
+            return res.status(400).render('error', {
+                title: 'Error',
+                message: 'Invalid status value'
+            });
+        }
+
+        trade.status = status;
+        await trade.save();
+
+        // Update items status based on trade status
+        if (status === 'Accepted') {
+            await Item.updateMany(
+                { _id: { $in: [...trade.offeredItems, ...trade.requestedItems] } },
+                { status: 'Traded' }
+            );
+        } else if (status === 'Rejected' || status === 'Cancelled') {
+            await Item.updateMany(
+                { _id: { $in: [...trade.offeredItems, ...trade.requestedItems] } },
+                { status: 'Available' }
+            );
+        }
+
+        // Create activity for status update
+        let activityType;
+        let activityDescription;
+
+        switch (status) {
+            case 'Accepted':
+                activityType = 'TRADE_ACCEPTED';
+                activityDescription = 'Trade accepted';
+                break;
+            case 'Rejected':
+                activityType = 'TRADE_REJECTED';
+                activityDescription = 'Trade rejected';
+                break;
+            case 'Completed':
+                activityType = 'TRADE_COMPLETED';
+                activityDescription = 'Trade completed';
+                break;
+            default:
+                activityType = 'TRADE_CREATED';
+                activityDescription = `Trade ${status.toLowerCase()}`;
+        }
+
+        await Activity.create({
+            user: req.user._id,
+            type: activityType,
+            description: activityDescription,
+            relatedTrade: trade._id
+        });
+
+        if (isApiRequest(req)) {
+            return res.json(trade);
+        }
+
+        req.flash('success_msg', `Trade ${status.toLowerCase()} successfully`);
+        return res.redirect(`/trades/${trade._id}`);
+    } catch (error) {
+        console.error('Error updating trade status:', error);
+        if (isApiRequest(req)) {
+            return res.status(500).json({ error: 'Failed to update trade status' });
+        }
+        return res.status(500).render('error', {
+            title: 'Error',
+            message: 'Failed to update trade status'
+        });
+    }
+});
+
+// Add message to trade
+router.post('/:id/messages', ensureAuthenticated, async (req, res) => {
+    try {
+        const { content } = req.body;
+        const trade = await Trade.findById(req.params.id);
+
+        if (!trade) {
+            return res.status(404).json({ error: 'Trade not found' });
+        }
+
+        if (!content || content.trim() === '') {
+            return res.status(400).json({ error: 'Message content is required' });
+        }
+
+        // Check if user is part of this trade
+        if (trade.initiator.toString() !== req.user._id.toString() &&
+            trade.receiver.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'Not authorized to message in this trade' });
+        }
+
+        await trade.addMessage(req.user._id, content);
+        
+        if (isApiRequest(req)) {
+            return res.json(trade);
+        }
+
+        res.redirect(`/trades/${trade._id}`);
+    } catch (error) {
+        console.error('Error adding message:', error);
+        if (isApiRequest(req)) {
+            return res.status(500).json({ error: 'Failed to add message' });
+        }
+        res.status(500).render('error', {
+            title: 'Error',
+            message: 'Failed to add message'
+        });
+    }
+});
+
 // Get trade details
 router.get('/:id', ensureAuthenticated, async (req, res) => {
     try {
@@ -212,84 +351,6 @@ router.get('/:id', ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Update trade status
-router.put('/:id/status', ensureAuthenticated, async (req, res) => {
-    try {
-        const { status } = req.body;
-        const trade = await Trade.findById(req.params.id);
-
-        if (!trade) {
-            return res.status(404).json({ error: 'Trade not found' });
-        }
-
-        // Check if user is authorized to update status
-        if (trade.receiver.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ error: 'Not authorized to update trade status' });
-        }
-
-        if (!['Pending', 'Accepted', 'Rejected', 'Completed', 'Cancelled'].includes(status)) {
-            return res.status(400).json({ error: 'Invalid status value' });
-        }
-
-        trade.status = status;
-        await trade.save();
-
-        if (isApiRequest(req)) {
-            return res.json(trade);
-        }
-
-        res.redirect(`/trades/${trade._id}`);
-    } catch (error) {
-        console.error('Error updating trade status:', error);
-        if (isApiRequest(req)) {
-            return res.status(500).json({ error: 'Failed to update trade status' });
-        }
-        res.status(500).render('error', {
-            title: 'Error',
-            message: 'Failed to update trade status'
-        });
-    }
-});
-
-// Add message to trade
-router.post('/:id/messages', ensureAuthenticated, async (req, res) => {
-    try {
-        const { content } = req.body;
-        const trade = await Trade.findById(req.params.id);
-
-        if (!trade) {
-            return res.status(404).json({ error: 'Trade not found' });
-        }
-
-        if (!content || content.trim() === '') {
-            return res.status(400).json({ error: 'Message content is required' });
-        }
-
-        // Check if user is part of this trade
-        if (trade.initiator.toString() !== req.user._id.toString() &&
-            trade.receiver.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ error: 'Not authorized to message in this trade' });
-        }
-
-        await trade.addMessage(req.user._id, content);
-        
-        if (isApiRequest(req)) {
-            return res.json(trade);
-        }
-
-        res.redirect(`/trades/${trade._id}`);
-    } catch (error) {
-        console.error('Error adding message:', error);
-        if (isApiRequest(req)) {
-            return res.status(500).json({ error: 'Failed to add message' });
-        }
-        res.status(500).render('error', {
-            title: 'Error',
-            message: 'Failed to add message'
-        });
-    }
-});
-
 // Delete trade
 router.delete('/:id', ensureAuthenticated, async (req, res) => {
     try {
@@ -331,5 +392,83 @@ router.delete('/:id', ensureAuthenticated, async (req, res) => {
 
 // Rate trade partner
 router.post('/:id/rate', ensureAuthenticated, tradeController.rateTradePartner);
+
+// Complete trade
+router.post('/:id/complete', ensureAuthenticated, async (req, res) => {
+    try {
+        const trade = await Trade.findById(req.params.id);
+
+        if (!trade) {
+            if (isApiRequest(req)) {
+                return res.status(404).json({ error: 'Trade not found' });
+            }
+            return res.status(404).render('error', {
+                title: 'Error',
+                message: 'Trade not found'
+            });
+        }
+
+        // Check if user is authorized to complete the trade
+        if (trade.initiator.toString() !== req.user._id.toString() && 
+            trade.receiver.toString() !== req.user._id.toString()) {
+            if (isApiRequest(req)) {
+                return res.status(403).json({ error: 'Not authorized to complete this trade' });
+            }
+            return res.status(403).render('error', {
+                title: 'Error',
+                message: 'Not authorized to complete this trade'
+            });
+        }
+
+        // Check if trade is in Accepted state
+        if (trade.status !== 'Accepted') {
+            if (isApiRequest(req)) {
+                return res.status(400).json({ error: 'Trade must be in Accepted state to complete' });
+            }
+            return res.status(400).render('error', {
+                title: 'Error',
+                message: 'Trade must be in Accepted state to complete'
+            });
+        }
+
+        // Update trade status to Completed
+        trade.status = 'Completed';
+        await trade.save();
+
+        // Update items status to Traded
+        await Item.updateMany(
+            { _id: { $in: [...trade.offeredItems, ...trade.requestedItems] } },
+            { status: 'Traded' }
+        );
+
+        // Increment totalTrades for both users
+        await User.findByIdAndUpdate(trade.initiator, { $inc: { totalTrades: 1 } });
+        await User.findByIdAndUpdate(trade.receiver, { $inc: { totalTrades: 1 } });
+
+        // Create activity for trade completion
+        await Activity.create({
+            user: req.user._id,
+            type: 'TRADE_COMPLETED',
+            description: 'Trade completed',
+            relatedTrade: trade._id
+        });
+
+        if (isApiRequest(req)) {
+            return res.json(trade);
+        }
+
+        req.flash('success_msg', 'Trade completed successfully');
+        return res.redirect(`/trades/${trade._id}`);
+    } catch (error) {
+        console.error('Error completing trade:', error);
+        if (isApiRequest(req)) {
+            return res.status(500).json({ error: 'Failed to complete trade' });
+        }
+        return res.status(500).render('error', {
+            title: 'Error',
+            message: 'Failed to complete trade'
+        });
+    }
+});
 
 module.exports = router; 

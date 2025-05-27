@@ -251,6 +251,16 @@
             gap: 12px;
             padding: 16px;
         }
+
+        .star-rating {
+            display: flex;
+            gap: 2px;
+            justify-content: center;
+        }
+
+        .star-rating .material-icons {
+            font-size: 20px;
+        }
     </style>
 </head>
 
@@ -286,6 +296,20 @@
                                         <%= new Date(user.createdAt).toLocaleDateString() %>
                                     </div>
                                     <div class="stat-label">Member Since</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">
+                                        <div class="star-rating">
+                                            <% for(let i=1; i <=5; i++) { %>
+                                                <i class="material-icons"
+                                                    style="color: <%= i <= user.averageRating ? '#FFD700' : '#E0E0E0' %>">star</i>
+                                                <% } %>
+                                        </div>
+                                        <div style="font-size: 14px; margin-top: 4px;">
+                                            <%= user.averageRating.toFixed(1) %> / 5.0
+                                        </div>
+                                    </div>
+                                    <div class="stat-label">Average Rating</div>
                                 </div>
                             </div>
                         </div>

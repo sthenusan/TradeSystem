@@ -80,7 +80,7 @@ const UserSchema = new mongoose.Schema({
       message: 'Please enter a valid URL'
     }
   },
-  rating: {
+  averageRating: {
     type: Number,
     default: 0,
     min: 0,
@@ -90,10 +90,6 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
-  },
-  averageRating: {
-    type: Number,
-    default: 0
   },
   createdAt: {
     type: Date,
