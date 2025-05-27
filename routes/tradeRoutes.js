@@ -1,7 +1,10 @@
 ﻿const express = require('express');
 const router = express.Router();
 const { ensureAuthenticated } = require('../middleware/auth');
+
+const tradeController = require('../controllers/tradeController');
 const Trade = require('../models/Trade');
+const Message = require('../models/Message');
 const User = require('../models/User');
 const Item = require('../models/Item');
 const mongoose = require('mongoose');
@@ -111,6 +114,32 @@ router.get('/', ensureAuthenticated, async (req, res) => {
     console.error('Trade list error:', err);
     res.status(500).render('error', { title: 'Error', message: 'Could not load trades' });
   }
+});
+
+// Chat Route
+router.get('/chat/:tradeId', ensureAuthenticated, async (req, res) => {
+    try {
+        const trade = await Trade.findById(req.params.tradeId).populate('initiator receiver');
+        if (!trade) {
+            return res.status(404).render('error', { message: 'Trade not found' });
+        }
+
+        const recipient = trade.initiator._id.toString() === req.user._id.toString()
+            ? trade.receiver
+            : trade.initiator;
+
+        const messages = await Message.find({ trade: trade._id }).sort({ createdAt: 1 });
+
+        res.render('chat/chat', {
+            user: req.user,
+            trade,
+            recipient,
+            messages
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).render('error', { message: 'Server error' });
+    }
 });
 
 module.exports = router;

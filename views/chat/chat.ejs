@@ -1,34 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Chat Room</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-</head>
-<body>
-  <%- include('../partials/navbar') %>
 
-  <div class="container">
-    <h5>Chat with <%= partnerName %></h5>
-    <div class="card">
-      <div class="card-content" id="chat-box" style="max-height: 300px; overflow-y: auto;">
-        <% trade.messages.forEach(msg => { %>
-          <div class="message <%= msg.sender._id.toString() === user._id.toString() ? 'right-align' : '' %>">
-            <p><strong><%= msg.sender.firstName %>:</strong> <%= msg.content %></p>
-          </div>
-        <% }) %>
-      </div>
-    </div>
+<!-- views/chat/chat.ejs -->
 
-    <form id="messageForm" action="/trades/<%= trade._id %>/messages" method="POST">
-      <div class="input-field">
-        <textarea id="messageInput" name="content" class="materialize-textarea" required></textarea>
-        <label for="messageInput">Type your message</label>
-      </div>
-      <button class="btn waves-effect" type="submit">Send</button>
-    </form>
+<div class="chat-container">
+  <div class="chat-header">
+    <h5>Chat with <%= recipient.name %></h5>
   </div>
 
-  <script src="/js/chat.js"></script>
-</body>
-</html>
+  <div class="chat-messages" id="chatBox">
+    <% messages.forEach(msg => { %>
+      <div class="message <%= msg.sender._id.equals(user._id) ? 'sent' : 'received' %>">
+        <p><%= msg.content %></p>
+        <span class="timestamp"><%= new Date(msg.createdAt).toLocaleTimeString() %></span>
+      </div>
+    <% }) %>
+  </div>
+
+  <form id="messageForm" class="chat-input">
+    <input type="hidden" id="recipientId" value="<%= recipient._id %>">
+    <input type="hidden" id="tradeId" value="<%= trade._id %>">
+    <input type="text" id="msgInput" placeholder="Type a message..." required>
+    <button type="submit" class="btn">Send</button>
+  </form>
+</div>
+
+<script>
+  const CURRENT_USER_ID = '<%= user._id %>';
+</script>
+<script src="/js/chat.js"></script>
