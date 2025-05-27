@@ -65,12 +65,9 @@ router.put('/:id/status', ensureAuthenticated, tradeController.updateTradeStatus
 // Add message to trade
 router.post('/:id/messages', ensureAuthenticated, tradeController.addMessage);
 
-// 🔓 Bypassed Chat Route (TEMP FOR DEV)
-router.get('/chat/:tradeId', async (req, res) => {
+// Chat Route
+router.get('/chat/:tradeId', ensureAuthenticated, async (req, res) => {
     try {
-        // Hardcoded logged-in user for testing: Demo Trader
-        req.user = await User.findById('682c347004ec912f406c4bd0'); // Replace with actual user ID
-
         const trade = await Trade.findById(req.params.tradeId).populate('initiator receiver');
         if (!trade) {
             return res.status(404).render('error', { message: 'Trade not found' });
