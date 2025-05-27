@@ -15,9 +15,6 @@ const Trade = require('./models/Trade');
 const Activity = require('./models/Activity');
 const Rating = require('./models/Rating');
 
-// NEW: Require messaging routes
-const messageRoutes = require('./routes/messageRoutes');
-
 // Initialize express app
 const app = express();
 
@@ -125,9 +122,6 @@ app.use('/', require('./routes/index'));
 app.get('/', (req, res) => {
   res.render('index', { title: 'Home' });
 });
-
-// ✅ NEW: Messaging routes
-app.use('/api/messages', messageRoutes); // <-- Add this line
 
 // 404 handler
 app.use((req, res, next) => {

@@ -1,4 +1,4 @@
-﻿const LocalStrategy = require('passport-local').Strategy;
+const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
@@ -6,32 +6,21 @@ module.exports = function (passport) {
     passport.use(
         new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
             try {
-                if (process.env.NODE_ENV !== 'production') {
-                    console.log("🔐 Incoming login attempt:");
-                    console.log("   Email:", email);
-                }
-
-                // Convert email to lowercase for case-insensitive match
-                const user = await User.findOne({ email: email.toLowerCase() });
-
+                // Match user
+                const user = await User.findOne({ email: email });
                 if (!user) {
-                    console.log("❌ User not found with email:", email.toLowerCase());
                     return done(null, false, { message: 'That email is not registered' });
                 }
 
-                console.log("✅ User found:", user.email);
-
-                // Compare the provided password with the hashed password in the DB
+                // Match password
                 const isMatch = await bcrypt.compare(password, user.password);
                 if (isMatch) {
-                    console.log("✅ Password match. Login successful.");
                     return done(null, user);
                 } else {
-                    console.log("❌ Password mismatch.");
                     return done(null, false, { message: 'Password incorrect' });
                 }
             } catch (err) {
-                console.error("🔥 Error during authentication:", err);
+                console.error(err);
                 return done(err);
             }
         })
@@ -49,4 +38,4 @@ module.exports = function (passport) {
             done(err, null);
         }
     });
-};
+}; 
