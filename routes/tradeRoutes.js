@@ -10,10 +10,98 @@ const upload = multer();
 const mongoose = require('mongoose');
 const tradeController = require('../controllers/tradeController');
 
-// Helper function to determine if request is API
+// Helper function to check if request is API request
 const isApiRequest = (req) => {
-    return req.path.startsWith('/api/') || req.headers.accept?.includes('application/json');
+    return req.path.startsWith('/api/') || req.get('Accept') === 'application/json';
 };
+
+// Helper function to create activities for both users in a trade
+async function createTradeActivity(trade, type, actionUser) {
+    try {
+
+        const initiator = await User.findById(trade.initiator);
+        const receiver = await User.findById(trade.receiver);
+        
+        // Determine if actionUser is initiator or receiver
+        const isInitiator = actionUser.toString() === trade.initiator.toString();
+
+        // Create activities for both users
+        const activities = [];
+
+        // Activity for initiator
+        let initiatorMessage;
+        switch (type) {
+            case 'TRADE_CREATED':
+                initiatorMessage = `You have proposed a trade with ${receiver.firstName} ${receiver.lastName}`;
+                break;
+            case 'TRADE_ACCEPTED':
+                initiatorMessage = `${receiver.firstName} ${receiver.lastName} has accepted your trade proposal`;
+                break;
+            case 'TRADE_REJECTED':
+                initiatorMessage = `${receiver.firstName} ${receiver.lastName} has rejected your trade proposal`;
+                break;
+            case 'TRADE_COMPLETED':
+                initiatorMessage = `${receiver.firstName} ${receiver.lastName} has completed the trade with you`;
+                break;
+            case 'TRADE_CANCELLED':
+                initiatorMessage = `You have cancelled your trade with ${receiver.firstName} ${receiver.lastName}`;
+                break;
+            default:
+                initiatorMessage = 'Trade activity occurred';
+        }
+
+        // Activity for receiver
+        let receiverMessage;
+        switch (type) {
+            case 'TRADE_CREATED':
+                receiverMessage = `${initiator.firstName} ${initiator.lastName} has sent you a trade proposal`;
+                break;
+            case 'TRADE_ACCEPTED':
+                receiverMessage = `You have accepted the trade proposal from ${initiator.firstName} ${initiator.lastName}`;
+                break;
+            case 'TRADE_REJECTED':
+                receiverMessage = `You have rejected the trade proposal from ${initiator.firstName} ${initiator.lastName}`;
+                break;
+            case 'TRADE_COMPLETED':
+                receiverMessage = `You have completed the trade with ${initiator.firstName} ${initiator.lastName}`;
+                break;
+            case 'TRADE_CANCELLED':
+                receiverMessage = `${initiator.firstName} ${initiator.lastName} has cancelled the trade`;
+                break;
+            default:
+                receiverMessage = 'Trade activity occurred';
+        }
+
+        // Create activity for initiator
+        const initiatorActivity = await Activity.create({
+            creator: actionUser,
+            receiver: trade.initiator,
+            type: type,
+            message: initiatorMessage,
+            relatedTrade: trade._id
+        });
+        activities.push(initiatorActivity);
+
+        // Create activity for receiver
+        const receiverActivity = await Activity.create({
+            creator: actionUser,
+            receiver: trade.receiver,
+            type: type,
+            message: receiverMessage,
+            relatedTrade: trade._id
+        });
+        activities.push(receiverActivity);
+
+        console.log('Created activities:', activities.map(a => a._id));
+    } catch (error) {
+        console.error('Error creating trade activity:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+    }
+}
 
 // Get all trades for the logged-in user
 router.get('/', ensureAuthenticated, async (req, res) => {
@@ -55,90 +143,40 @@ router.get('/', ensureAuthenticated, async (req, res) => {
 // Create trade
 router.post('/', ensureAuthenticated, upload.none(), async (req, res) => {
     try {
-        // Parse JSON strings back into arrays
-        const requestedItems = JSON.parse(req.body.requestedItems);
-        const offeredItems = JSON.parse(req.body.offeredItems);
-        const receiverId = req.body.receiverId;
-        const message = req.body.message;
-
-        if (!receiverId || !offeredItems || !requestedItems) {
-            if (isApiRequest(req)) {
-                return res.status(400).json({ error: 'Missing required fields' });
-            }
-            return res.status(400).render('error', {
-                title: 'Error',
-                msg: 'Missing required fields',
-                error: { status: 400 }
-            });
+        const { receiverId, offeredItems, requestedItems, message } = req.body;
+        
+        // Parse the item IDs from the request
+        const offeredItemsArray = Array.isArray(offeredItems) ? offeredItems : JSON.parse(offeredItems);
+        const requestedItemsArray = Array.isArray(requestedItems) ? requestedItems : JSON.parse(requestedItems);
+        
+        // Validate items
+        const offeredItemsList = await Item.find({ _id: { $in: offeredItemsArray } });
+        const requestedItemsList = await Item.find({ _id: { $in: requestedItemsArray } });
+        
+        if (offeredItemsList.length !== offeredItemsArray.length || requestedItemsList.length !== requestedItemsArray.length) {
+            return res.status(400).json({ message: 'One or more items not found' });
         }
 
-        // Validate ObjectIds
-        if (!mongoose.Types.ObjectId.isValid(receiverId)) {
-            if (isApiRequest(req)) {
-                return res.status(400).json({ error: 'Invalid receiver ID' });
-            }
-            return res.status(400).render('error', {
-                title: 'Error',
-                msg: 'Invalid receiver ID',
-                error: { status: 400 }
-            });
+        // Check if items are available
+        const unavailableItems = [...offeredItemsList, ...requestedItemsList].filter(item => item.status !== 'Available');
+        if (unavailableItems.length > 0) {
+            return res.status(400).json({ message: 'One or more items are not available for trade' });
         }
 
-        // Get the requested item to find its owner
-        const requestedItemDoc = await Item.findById(requestedItems[0]).populate('owner', 'firstName lastName');
-        if (!requestedItemDoc) {
-            if (isApiRequest(req)) {
-                return res.status(404).json({ error: 'Requested item not found' });
-            }
-            return res.status(404).render('error', {
-                title: 'Error',
-                msg: 'Requested item not found',
-                error: { status: 404 }
-            });
-        }
-
-        // Validate that offered items belong to the current user
-        const offeredItemsList = await Item.find({
-            _id: { $in: offeredItems },
-            owner: req.user._id
-        });
-
-        if (offeredItemsList.length !== offeredItems.length) {
-            if (isApiRequest(req)) {
-                return res.status(400).json({ error: 'Invalid items selected for trade' });
-            }
-            return res.status(400).render('error', {
-                title: 'Error',
-                msg: 'Invalid items selected for trade',
-                error: { status: 400 }
-            });
-        }
-
-        // Set all items involved in the trade to 'Pending' status
-        const allItems = [...offeredItemsList, requestedItemDoc];
-        for (const item of allItems) {
-            await Item.findByIdAndUpdate(item._id, { status: 'Pending' });
-        }
-
+        // Create trade
         const trade = await Trade.create({
             initiator: req.user._id,
-            receiver: requestedItemDoc.owner._id,
-            requestedItems: requestedItems,
-            offeredItems: offeredItems,
-            status: 'Pending',
+            receiver: receiverId,
+            offeredItems: offeredItemsArray,
+            requestedItems: requestedItemsArray,
             messages: [{
                 sender: req.user._id,
                 content: message || 'Trade proposal'
             }]
         });
 
-        // Create activity for new trade
-        await Activity.create({
-            user: req.user._id,
-            type: 'TRADE_CREATED',
-            description: 'Proposed a new trade',
-            relatedTrade: trade._id
-        });
+        // Create activities for both users
+        await createTradeActivity(trade, 'TRADE_CREATED', req.user._id);
 
         if (isApiRequest(req)) {
             return res.status(201).json(trade);
@@ -196,6 +234,7 @@ router.post('/:id/status', ensureAuthenticated, async (req, res) => {
             });
         }
 
+        // Update trade status
         trade.status = status;
         await trade.save();
 
@@ -212,34 +251,27 @@ router.post('/:id/status', ensureAuthenticated, async (req, res) => {
             );
         }
 
-        // Create activity for status update
+        // Create activities for both users based on status
         let activityType;
-        let activityDescription;
-
         switch (status) {
             case 'Accepted':
                 activityType = 'TRADE_ACCEPTED';
-                activityDescription = 'Trade accepted';
                 break;
             case 'Rejected':
                 activityType = 'TRADE_REJECTED';
-                activityDescription = 'Trade rejected';
                 break;
             case 'Completed':
                 activityType = 'TRADE_COMPLETED';
-                activityDescription = 'Trade completed';
+                break;
+            case 'Cancelled':
+                activityType = 'TRADE_CANCELLED';
                 break;
             default:
                 activityType = 'TRADE_CREATED';
-                activityDescription = `Trade ${status.toLowerCase()}`;
         }
 
-        await Activity.create({
-            user: req.user._id,
-            type: activityType,
-            description: activityDescription,
-            relatedTrade: trade._id
-        });
+        // Create activities for both users
+        await createTradeActivity(trade, activityType, req.user._id);
 
         if (isApiRequest(req)) {
             return res.json(trade);
@@ -445,13 +477,8 @@ router.post('/:id/complete', ensureAuthenticated, async (req, res) => {
         await User.findByIdAndUpdate(trade.initiator, { $inc: { totalTrades: 1 } });
         await User.findByIdAndUpdate(trade.receiver, { $inc: { totalTrades: 1 } });
 
-        // Create activity for trade completion
-        await Activity.create({
-            user: req.user._id,
-            type: 'TRADE_COMPLETED',
-            description: 'Trade completed',
-            relatedTrade: trade._id
-        });
+        // Create activities for both users
+        await createTradeActivity(trade, 'TRADE_COMPLETED', req.user._id);
 
         if (isApiRequest(req)) {
             return res.json(trade);
