@@ -14,10 +14,8 @@ const transporter = nodemailer.createTransport({
 const verifyTransporter = async () => {
     try {
         await transporter.verify();
-        console.log('SMTP connection verified successfully');
         return true;
     } catch (error) {
-        console.error('SMTP connection verification failed:', error);
         return false;
     }
 };
@@ -35,8 +33,6 @@ const generateResetToken = () => {
 // Send verification email with code
 const sendVerificationEmail = async (user, verificationCode) => {
     try {
-        console.log('Attempting to send verification email to:', user.email);
-        
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: user.email,
@@ -64,21 +60,9 @@ const sendVerificationEmail = async (user, verificationCode) => {
             `
         };
 
-        console.log('Mail options prepared:', {
-            from: mailOptions.from,
-            to: mailOptions.to,
-            subject: mailOptions.subject
-        });
-
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Verification email sent successfully:', info.messageId);
+        await transporter.sendMail(mailOptions);
         return true;
     } catch (error) {
-        console.error('Detailed error sending verification email:', {
-            error: error.message,
-            stack: error.stack,
-            code: error.code
-        });
         throw new Error('Failed to send verification email');
     }
 };
@@ -115,11 +99,9 @@ const sendPasswordResetEmail = async (user, resetToken) => {
             `
         };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Password reset email sent:', info.messageId);
+        await transporter.sendMail(mailOptions);
         return true;
     } catch (error) {
-        console.error('Error sending password reset email:', error);
         throw new Error('Failed to send password reset email');
     }
 };
@@ -201,11 +183,9 @@ const sendTradeNotificationEmail = async (user, trade, type) => {
             `
         };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Trade notification email sent:', info.messageId);
+        await transporter.sendMail(mailOptions);
         return true;
     } catch (error) {
-        console.error('Error sending trade notification email:', error);
         throw new Error('Failed to send trade notification email');
     }
 };
@@ -246,11 +226,9 @@ const sendWelcomeEmail = async (user) => {
             `
         };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Welcome email sent:', info.messageId);
+        await transporter.sendMail(mailOptions);
         return true;
     } catch (error) {
-        console.error('Error sending welcome email:', error);
         throw new Error('Failed to send welcome email');
     }
 };
