@@ -40,9 +40,7 @@ exports.getForgotPasswordPage = (req, res) => {
 exports.getResetPasswordPage = async (req, res) => {
     try {
         const token = req.params.token;
-        console.log('Checking reset token:', token);
         const now = new Date();
-        console.log('Current time (UTC):', now.toISOString());
         
         const user = await User.findOne({
             resetPasswordToken: token,
@@ -50,13 +48,10 @@ exports.getResetPasswordPage = async (req, res) => {
         });
 
         if (!user) {
-            console.log('Token validation failed - user not found or token expired');
             req.flash('error_msg', 'Password reset token is invalid or has expired');
             return res.redirect('/users/forgot-password');
         }
 
-        console.log('Token is valid, expires at:', user.resetPasswordExpires.toISOString());
-        console.log('Time remaining in minutes:', (user.resetPasswordExpires - now) / (1000 * 60));
         res.render('users/reset-password', {
             title: 'Reset Password',
             currentPage: 'reset-password',
@@ -195,7 +190,6 @@ exports.updateProfile = async (req, res) => {
         if (currentPassword && newPassword) {
             // Validate current password
             const isMatch = await user.comparePassword(currentPassword);
-            console.log('[DEBUG] Current password match:', isMatch);
             if (!isMatch) {
                 req.flash('error_msg', 'Current password is incorrect');
                 return res.redirect('/users/profile');
@@ -263,8 +257,8 @@ exports.updateProfile = async (req, res) => {
             res.redirect('/users/profile');
         }
     } catch (err) {
-        console.error('Error in updateProfile:', err);
-        req.flash('error_msg', 'Error updating profile');
+        console.error('Error updating profile:', err);
+        req.flash('error_msg', 'Failed to update profile');
         res.redirect('/users/profile');
     }
 };
@@ -324,11 +318,8 @@ exports.deleteAccount = async (req, res) => {
 // Send verification email
 exports.sendVerificationEmail = async (req, res) => {
     try {
-        console.log('Starting email verification process for user:', req.user.id);
-        
         const user = await User.findById(req.user.id);
         if (!user) {
-            console.log('User not found:', req.user.id);
             return res.json({ 
                 status: 'error',
                 message: 'User not found'
@@ -336,7 +327,6 @@ exports.sendVerificationEmail = async (req, res) => {
         }
         
         if (user.isEmailVerified) {
-            console.log('Email already verified for user:', req.user.id);
             return res.json({ 
                 status: 'error',
                 message: 'Your email is already verified'
@@ -345,8 +335,6 @@ exports.sendVerificationEmail = async (req, res) => {
 
         // Generate new verification code
         const code = generateVerificationCode();
-        console.log('Generated verification code for user:', req.user.id);
-        
         const codeExpiry = new Date();
         codeExpiry.setMinutes(codeExpiry.getMinutes() + 10); // Code expires in 10 minutes
 
@@ -354,22 +342,16 @@ exports.sendVerificationEmail = async (req, res) => {
         user.verificationCode = code;
         user.verificationCodeExpires = codeExpiry;
         await user.save();
-        console.log('Verification code saved to user:', req.user.id);
         
         // Send verification email
         await sendVerificationEmail(user, code);
-        console.log('Verification email sent successfully');
 
         res.json({
             status: 'success',
             message: 'Verification code sent. Please check your email.'
         });
     } catch (err) {
-        console.error('Error in sendVerificationEmail:', {
-            error: err.message,
-            stack: err.stack,
-            code: err.code
-        });
+        console.error('Error in sendVerificationEmail:', err);
         res.json({
             status: 'error',
             message: 'Error sending verification code'
@@ -419,37 +401,26 @@ exports.verifyEmailWithCode = async (req, res) => {
 exports.requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
-        console.log('\n=== Password Reset Request ===');
-        console.log('Email:', email);
-        
         const user = await User.findOne({ email: email.toLowerCase() });
         
         if (!user) {
-            console.log('No user found with email:', email);
             req.flash('error_msg', 'No account found with that email address');
             return res.redirect('/users/forgot-password');
         }
 
         // Generate reset token
         const resetToken = generateResetToken();
-        console.log('Generated reset token:', resetToken);
         
         // Set expiration to 5 minutes from current time
         const now = new Date();
         const expiryTime = new Date(now.getTime() + (5 * 60 * 1000)); // 5 minutes in milliseconds
-        console.log('Current time:', now.toISOString());
-        console.log('Token will expire at:', expiryTime.toISOString());
-        console.log('Time difference in minutes:', (expiryTime - now) / (1000 * 60));
         
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = expiryTime;
         await user.save();
-        console.log('Token saved to database');
 
         // Send reset email
         await sendPasswordResetEmail(user, resetToken);
-        console.log('Reset email sent successfully');
-        console.log('=== End Password Reset Request ===\n');
 
         req.flash('success_msg', 'Password reset instructions have been sent to your email');
         res.redirect('/users/login');
@@ -465,37 +436,21 @@ exports.resetPassword = async (req, res) => {
     try {
         const token = req.params.token;
         const { password, confirmPassword } = req.body;
-        console.log('\n=== Password Reset Process ===');
-        console.log('Token received from params:', token);
         const now = new Date();
-        const expiryTime = new Date(now.getTime() + (0));
-        console.log('Current time:', now.toISOString());
-        console.log('Expiry time for comparison:', expiryTime.toISOString());
 
         // Find user with valid reset token
-        console.log('Searching for user with token...');
         const user = await User.findOne({
             resetPasswordToken: token,
-            resetPasswordExpires: { $gt: expiryTime }
+            resetPasswordExpires: { $gt: now }
         });
 
         if (!user) {
-            console.log('Token validation failed - user not found or token expired');
-            console.log('Query conditions:', {
-                resetPasswordToken: token,
-                resetPasswordExpires: { $gt: expiryTime }
-            });
             req.flash('error_msg', 'Password reset token is invalid or has expired');
             return res.redirect('/users/forgot-password');
         }
 
-        console.log('User found:', user.email);
-        console.log('Token is valid, expires at:', user.resetPasswordExpires.toISOString());
-        console.log('Time remaining in minutes:', (user.resetPasswordExpires - now) / (1000 * 60));
-
         // Validate passwords match
         if (password !== confirmPassword) {
-            console.log('Passwords do not match');
             req.flash('error_msg', 'Passwords do not match');
             return res.redirect('back');
         }
@@ -503,7 +458,6 @@ exports.resetPassword = async (req, res) => {
         // Validate password complexity
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
         if (!passwordRegex.test(password)) {
-            console.log('Password complexity validation failed');
             req.flash('error_msg', 'Password must contain at least 8 characters, including uppercase, lowercase, number, and special character');
             return res.redirect('back');
         }
@@ -513,14 +467,12 @@ exports.resetPassword = async (req, res) => {
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
         await user.save();
-        console.log('Password updated successfully');
-        console.log('=== End Password Reset Process ===\n');
 
         req.flash('success_msg', 'Your password has been reset successfully');
         res.redirect('/users/login');
     } catch (err) {
         console.error('Error resetting password:', err);
-        req.flash('error_msg', 'Error resetting password');
+        req.flash('error_msg', 'Failed to reset password');
         res.redirect('/users/forgot-password');
     }
 };
@@ -865,13 +817,9 @@ exports.verifyEmailWithCodeAPI = async (req, res) => {
 exports.requestPasswordResetAPI = async (req, res) => {
     try {
         const { email } = req.body;
-        console.log('\n=== API Password Reset Request ===');
-        console.log('Email:', email);
-        
         const user = await User.findOne({ email: email.toLowerCase() });
         
         if (!user) {
-            console.log('No user found with email:', email);
             return res.status(404).json({
                 status: 'error',
                 message: 'No account found with that email address'
@@ -879,23 +827,14 @@ exports.requestPasswordResetAPI = async (req, res) => {
         }
 
         const resetToken = generateResetToken();
-        console.log('Generated reset token:', resetToken);
-        
-        // Set expiration to 5 minutes from current time
         const now = new Date();
         const expiryTime = new Date(now.getTime() + (5 * 60 * 1000)); // 5 minutes in milliseconds
-        console.log('Current time:', now.toISOString());
-        console.log('Token will expire at:', expiryTime.toISOString());
-        console.log('Time difference in minutes:', (expiryTime - now) / (1000 * 60));
         
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = expiryTime;
         await user.save();
-        console.log('Token saved to database');
 
         await sendPasswordResetEmail(user, resetToken);
-        console.log('Reset email sent successfully');
-        console.log('=== End API Password Reset Request ===\n');
 
         res.json({
             status: 'success',
@@ -914,33 +853,23 @@ exports.resetPasswordAPI = async (req, res) => {
     try {
         const token = req.params.token;
         const { password } = req.body;
-        console.log('\n=== API Password Reset Process ===');
-        console.log('Token received from params:', token);
         const now = new Date();
-        console.log('Current time:', now.toISOString());
 
         const user = await User.findOne({
             resetPasswordToken: token
         });
 
         if (!user) {
-            console.log('Token validation failed - user not found or token expired');
             return res.status(400).json({
                 status: 'error',
                 message: 'Password reset token is invalid or has expired'
             });
         }
 
-        console.log('User found:', user.email);
-        console.log('Token is valid, expires at:', user.resetPasswordExpires.toISOString());
-        console.log('Time remaining in minutes:', (user.resetPasswordExpires - now) / (1000 * 60));
-
         user.password = password;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
         await user.save();
-        console.log('Password updated successfully');
-        console.log('=== End API Password Reset Process ===\n');
 
         res.json({
             status: 'success',

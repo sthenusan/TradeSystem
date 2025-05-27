@@ -22,11 +22,9 @@ const activitySchema = new mongoose.Schema({
     relatedTrade: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Trade'
-    },
-    timestamp: {
-        type: Date,
-        default: Date.now
     }
+}, {
+    timestamps: true // This will add createdAt and updatedAt fields automatically
 });
 
 module.exports = mongoose.model('Activity', activitySchema); 
