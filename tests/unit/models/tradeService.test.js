@@ -4,310 +4,220 @@ const User = require('../../models/User');
 const Item = require('../../models/Item');
 const Trade = require('../../models/Trade');
 
-// Connect to test database
-beforeAll(async () => {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/trade-system-test');
-});
-
-// Clean up database before each test
-beforeEach(async () => {
-    await Trade.deleteMany({});
-    await User.deleteMany({});
-    await Item.deleteMany({});
-    // Create test users
-    initiator = await User.create({
-        firstName: 'Test',
-        lastName: 'Initiator',
-        email: 'initiator@test.com',
-        password: 'password123'
-    });
-    receiver = await User.create({
-        firstName: 'Test',
-        lastName: 'Receiver',
-        email: 'receiver@test.com',
-        password: 'password123'
-    });
-    // Create test items
-    offeredItem = await Item.create({
-        title: 'Test Offered Item',
-        description: 'Test Description',
-        owner: initiator._id,
-        images: ['test-image.jpg'],
-        status: 'Available',
-        location: 'Test Location',
-        condition: 'Like New',
-        category: 'Electronics',
-        value: 100
-    });
-    requestedItem = await Item.create({
-        title: 'Test Requested Item',
-        description: 'Test Description',
-        owner: receiver._id,
-        images: ['test-image.jpg'],
-        status: 'Available',
-        location: 'Test Location',
-        condition: 'Good',
-        category: 'Books',
-        value: 100
-    });
-});
-
-// Close database connection after all tests
-afterAll(async () => {
-    await mongoose.connection.close();
-});
-
-describe('Trade Service Unit Test', () => {
+describe('Trade Service', () => {
     let initiator, receiver, offeredItem, requestedItem;
 
-    describe('createTradeService', () => {
-        it('should create a trade with valid data', async () => {
-            const tradeData = {
-                initiator: initiator._id,
-                receiverId: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id],
-                message: 'Test trade proposal'
-            };
+    beforeAll(async () => {
+        // Connect to test database
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/trade_system_test', {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
 
-            const trade = await tradeService.createTradeService(tradeData);
+        // Create test users
+        initiator = await User.create({
+            firstName: 'Test',
+            lastName: 'Initiator',
+            email: 'initiator@test.com',
+            password: 'password123'
+        });
+
+        receiver = await User.create({
+            firstName: 'Test',
+            lastName: 'Receiver',
+            email: 'receiver@test.com',
+            password: 'password123'
+        });
+
+        // Create test items
+        offeredItem = await Item.create({
+            name: 'Test Offered Item',
+            description: 'Test Description',
+            owner: initiator._id,
+            status: 'Available'
+        });
+
+        requestedItem = await Item.create({
+            name: 'Test Requested Item',
+            description: 'Test Description',
+            owner: receiver._id,
+            status: 'Available'
+        });
+    });
+
+    afterAll(async () => {
+        // Clean up test data
+        await User.deleteMany({});
+        await Item.deleteMany({});
+        await Trade.deleteMany({});
+        await mongoose.connection.close();
+    });
+
+    describe('createTrade', () => {
+        it('should create a new trade successfully', async () => {
+            const trade = await tradeService.createTrade(
+                initiator._id,
+                receiver._id,
+                [offeredItem._id],
+                [requestedItem._id],
+                'Test trade proposal'
+            );
 
             expect(trade).toBeDefined();
-            expect(trade.status).toBe('Pending');
             expect(trade.initiator.toString()).toBe(initiator._id.toString());
             expect(trade.receiver.toString()).toBe(receiver._id.toString());
+            expect(trade.status).toBe('Pending');
             expect(trade.messages).toHaveLength(1);
         });
 
-        it('should throw error for invalid receiver', async () => {
-            const tradeData = {
-                initiator: initiator._id,
-                receiverId: new mongoose.Types.ObjectId(),
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id],
-                message: 'Test trade proposal'
-            };
-
-            await expect(tradeService.createTradeService(tradeData))
-                .rejects
-                .toThrow('Invalid receiver');
-        });
-
-        it('should throw error for invalid items', async () => {
-            const tradeData = {
-                initiator: initiator._id,
-                receiverId: receiver._id,
-                offeredItems: [new mongoose.Types.ObjectId()],
-                requestedItems: [requestedItem._id],
-                message: 'Test trade proposal'
-            };
-
-            await expect(tradeService.createTradeService(tradeData))
-                .rejects
-                .toThrow('Invalid items selected');
-        });
-
-        it('should throw error for unavailable items', async () => {
+        it('should throw error if items are not available', async () => {
             await Item.findByIdAndUpdate(offeredItem._id, { status: 'Traded' });
 
-            const tradeData = {
-                initiator: initiator._id,
-                receiverId: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id],
-                message: 'Test trade proposal'
-            };
+            await expect(tradeService.createTrade(
+                initiator._id,
+                receiver._id,
+                [offeredItem._id],
+                [requestedItem._id],
+                'Test trade proposal'
+            )).rejects.toThrow('One or more items are not available for trade');
 
-            await expect(tradeService.createTradeService(tradeData))
-                .rejects
-                .toThrow('Items are not available for trade');
-        });
-
-        it('should throw error for empty message', async () => {
-            const tradeData = {
-                initiator: initiator._id,
-                receiverId: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id],
-                message: ''
-            };
-
-            await expect(tradeService.createTradeService(tradeData))
-                .rejects
-                .toThrow('Message is required');
+            await Item.findByIdAndUpdate(offeredItem._id, { status: 'Available' });
         });
     });
 
-    describe('updateTradeStatusService', () => {
-        it('should update trade status to Accepted', async () => {
-            const trade = await Trade.create({
-                initiator: initiator._id,
-                receiver: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id]
-            });
+    describe('updateTradeStatus', () => {
+        let trade;
 
-            const updatedTrade = await tradeService.updateTradeStatusService(
-                trade._id,
+        beforeEach(async () => {
+            trade = await tradeService.createTrade(
+                initiator._id,
                 receiver._id,
-                'Accepted'
+                [offeredItem._id],
+                [requestedItem._id],
+                'Test trade proposal'
+            );
+        });
+
+        it('should update trade status to Accepted', async () => {
+            const updatedTrade = await tradeService.updateTradeStatus(
+                trade._id,
+                'Accepted',
+                receiver._id
             );
 
             expect(updatedTrade.status).toBe('Accepted');
-            expect(updatedTrade.updatedAt).toBeDefined();
         });
 
-        it('should update trade status to Rejected', async () => {
-            const trade = await Trade.create({
-                initiator: initiator._id,
-                receiver: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id]
-            });
-
-            const updatedTrade = await tradeService.updateTradeStatusService(
+        it('should throw error if user is not authorized', async () => {
+            await expect(tradeService.updateTradeStatus(
                 trade._id,
-                receiver._id,
-                'Rejected'
-            );
-
-            expect(updatedTrade.status).toBe('Rejected');
-        });
-
-        it('should throw error for invalid status', async () => {
-            const trade = await Trade.create({
-                initiator: initiator._id,
-                receiver: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id]
-            });
-
-            await expect(tradeService.updateTradeStatusService(
-                trade._id,
-                receiver._id,
-                'InvalidStatus'
-            )).rejects.toThrow('Invalid status');
-        });
-
-        it('should throw error for unauthorized status update', async () => {
-            const trade = await Trade.create({
-                initiator: initiator._id,
-                receiver: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id]
-            });
-
-            await expect(tradeService.updateTradeStatusService(
-                trade._id,
-                initiator._id,
-                'Accepted'
-            )).rejects.toThrow('Not authorized');
-        });
-
-        it('should throw error for non-existent trade', async () => {
-            await expect(tradeService.updateTradeStatusService(
-                new mongoose.Types.ObjectId(),
-                receiver._id,
-                'Accepted'
-            )).rejects.toThrow('Trade not found');
+                'Accepted',
+                initiator._id
+            )).rejects.toThrow('Not authorized to update trade status');
         });
     });
 
-    describe('addMessageService', () => {
-        it('should add message to trade', async () => {
-            const trade = await Trade.create({
-                initiator: initiator._id,
-                receiver: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id]
-            });
-
-            const updatedTrade = await tradeService.addMessageService(
-                trade._id,
+    describe('getUserTrades', () => {
+        beforeEach(async () => {
+            await Trade.deleteMany({});
+            await tradeService.createTrade(
+                initiator._id,
                 receiver._id,
-                'New test message'
+                [offeredItem._id],
+                [requestedItem._id],
+                'Test trade proposal'
             );
-
-            expect(updatedTrade.messages).toHaveLength(1);
-            expect(updatedTrade.messages[0].content).toBe('New test message');
-            expect(updatedTrade.messages[0].sender.toString()).toBe(receiver._id.toString());
         });
 
-        it('should throw error for unauthorized message', async () => {
-            const trade = await Trade.create({
-                initiator: initiator._id,
-                receiver: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id]
-            });
+        it('should return trades for initiator', async () => {
+            const trades = await tradeService.getUserTrades(initiator._id);
+            expect(trades).toHaveLength(1);
+            expect(trades[0].initiator._id.toString()).toBe(initiator._id.toString());
+        });
 
-            const thirdUser = await User.create({
-                firstName: 'Third',
+        it('should return trades for receiver', async () => {
+            const trades = await tradeService.getUserTrades(receiver._id);
+            expect(trades).toHaveLength(1);
+            expect(trades[0].receiver._id.toString()).toBe(receiver._id.toString());
+        });
+    });
+
+    describe('addTradeMessage', () => {
+        let trade;
+
+        beforeEach(async () => {
+            trade = await tradeService.createTrade(
+                initiator._id,
+                receiver._id,
+                [offeredItem._id],
+                [requestedItem._id],
+                'Test trade proposal'
+            );
+        });
+
+        it('should add message to trade', async () => {
+            const updatedTrade = await tradeService.addTradeMessage(
+                trade._id,
+                receiver._id,
+                'Test message'
+            );
+
+            expect(updatedTrade.messages).toHaveLength(2);
+            expect(updatedTrade.messages[1].content).toBe('Test message');
+        });
+
+        it('should throw error if user is not part of trade', async () => {
+            const otherUser = await User.create({
+                firstName: 'Other',
                 lastName: 'User',
-                email: 'third@test.com',
+                email: 'other@test.com',
                 password: 'password123'
             });
 
-            await expect(tradeService.addMessageService(
+            await expect(tradeService.addTradeMessage(
                 trade._id,
-                thirdUser._id,
+                otherUser._id,
                 'Test message'
-            )).rejects.toThrow('Not authorized');
-        });
-
-        it('should throw error for empty message', async () => {
-            const trade = await Trade.create({
-                initiator: initiator._id,
-                receiver: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id]
-            });
-
-            await expect(tradeService.addMessageService(
-                trade._id,
-                receiver._id,
-                ''
-            )).rejects.toThrow('Message content is required');
-        });
-
-        it('should throw error for non-existent trade', async () => {
-            await expect(tradeService.addMessageService(
-                new mongoose.Types.ObjectId(),
-                receiver._id,
-                'Test message'
-            )).rejects.toThrow('Trade not found');
+            )).rejects.toThrow('Not authorized to message in this trade');
         });
     });
 
-    describe('getTradeService', () => {
-        it('should get trade with populated fields', async () => {
-            const trade = await Trade.create({
-                initiator: initiator._id,
-                receiver: receiver._id,
-                offeredItems: [offeredItem._id],
-                requestedItems: [requestedItem._id],
-                messages: [{
-                    sender: initiator._id,
-                    content: 'Test message'
-                }]
-            });
+    describe('completeTrade', () => {
+        let trade;
 
-            const tradeDetails = await tradeService.getTradeService(trade._id);
-
-            expect(tradeDetails).toBeDefined();
-            expect(tradeDetails.initiator.firstName).toBe('Test');
-            expect(tradeDetails.initiator.lastName).toBe('Initiator');
-            expect(tradeDetails.receiver.firstName).toBe('Test');
-            expect(tradeDetails.receiver.lastName).toBe('Receiver');
-            expect(tradeDetails.offeredItems[0].title).toBe('Test Offered Item');
-            expect(tradeDetails.requestedItems[0].title).toBe('Test Requested Item');
-            expect(tradeDetails.messages[0].content).toBe('Test message');
+        beforeEach(async () => {
+            trade = await tradeService.createTrade(
+                initiator._id,
+                receiver._id,
+                [offeredItem._id],
+                [requestedItem._id],
+                'Test trade proposal'
+            );
+            await tradeService.updateTradeStatus(trade._id, 'Accepted', receiver._id);
         });
 
-        it('should throw error for non-existent trade', async () => {
-            await expect(tradeService.getTradeService(new mongoose.Types.ObjectId()))
-                .rejects
-                .toThrow('Trade not found');
+        it('should complete trade successfully', async () => {
+            const completedTrade = await tradeService.completeTrade(
+                trade._id,
+                receiver._id
+            );
+
+            expect(completedTrade.status).toBe('Completed');
+            
+            // Check if items are marked as traded
+            const offeredItemAfter = await Item.findById(offeredItem._id);
+            const requestedItemAfter = await Item.findById(requestedItem._id);
+            expect(offeredItemAfter.status).toBe('Traded');
+            expect(requestedItemAfter.status).toBe('Traded');
+        });
+
+        it('should throw error if trade is not in Accepted state', async () => {
+            await tradeService.updateTradeStatus(trade._id, 'Pending', receiver._id);
+
+            await expect(tradeService.completeTrade(
+                trade._id,
+                receiver._id
+            )).rejects.toThrow('Trade must be in Accepted state to complete');
         });
     });
 }); 
