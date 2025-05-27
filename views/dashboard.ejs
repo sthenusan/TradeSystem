@@ -68,26 +68,43 @@
                                             <li class="collection-item">
                                                 <div class="activity-item">
                                                     <i class="material-icons left">
-                                                        <% if (activity.type==='ITEM_ADDED' ) { %>
-                                                            add_circle
-                                                            <% } else if (activity.type==='TRADE_CREATED' ) { %>
-                                                                swap_horiz
-                                                                <% } else if (activity.type==='TRADE_ACCEPTED' ) { %>
-                                                                    check_circle
-                                                                    <% } else if (activity.type==='TRADE_REJECTED' ) {
+                                                        <% if (activity.type==='TRADE_CREATED' ) { %>
+                                                            swap_horiz
+                                                            <% } else if (activity.type==='TRADE_ACCEPTED' ) { %>
+                                                                check_circle
+                                                                <% } else if (activity.type==='TRADE_REJECTED' ) { %>
+                                                                    cancel
+                                                                    <% } else if (activity.type==='TRADE_COMPLETED' ) {
                                                                         %>
-                                                                        cancel
-                                                                        <% } else if (activity.type==='TRADE_COMPLETED'
+                                                                        done_all
+                                                                        <% } else if (activity.type==='TRADE_CANCELLED'
                                                                             ) { %>
-                                                                            done_all
-                                                                            <% } %>
+                                                                            block
+                                                                            <% } else if (activity.type==='ITEM_CREATED'
+                                                                                ) { %>
+                                                                                add_circle
+                                                                                <% } else if
+                                                                                    (activity.type==='ITEM_UPDATED' ) {
+                                                                                    %>
+                                                                                    edit
+                                                                                    <% } else if
+                                                                                        (activity.type==='ITEM_DELETED'
+                                                                                        ) { %>
+                                                                                        delete
+                                                                                        <% } else if
+                                                                                            (activity.type==='MESSAGE_RECEIVED'
+                                                                                            ) { %>
+                                                                                            mail
+                                                                                            <% } %>
                                                     </i>
-                                                    <span class="activity-description">
-                                                        <%= activity.description %>
-                                                    </span>
-                                                    <span class="secondary-content grey-text">
-                                                        <%= new Date(activity.createdAt).toLocaleDateString() %>
-                                                    </span>
+                                                    <div class="activity-content">
+                                                        <div class="activity-message">
+                                                            <%= activity.message || 'Activity occurred' %>
+                                                        </div>
+                                                        <div class="activity-time grey-text">
+                                                            <%= new Date(activity.createdAt).toLocaleString() %>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </li>
                                             <% }); %>
@@ -104,12 +121,23 @@
             <style>
                 .activity-item {
                     display: flex;
-                    align-items: center;
+                    align-items: flex-start;
                     gap: 10px;
                 }
 
-                .activity-description {
+                .activity-content {
                     flex-grow: 1;
+                    margin-left: 10px;
+                }
+
+                .activity-message {
+                    margin-bottom: 4px;
+                    font-size: 1rem;
+                    line-height: 1.4;
+                }
+
+                .activity-time {
+                    font-size: 0.8rem;
                 }
 
                 .material-icons {
@@ -117,7 +145,12 @@
                 }
 
                 .collection-item {
-                    color: #059669 !important;
+                    color: #333 !important;
+                    padding: 10px 20px !important;
+                }
+
+                .material-icons.left {
+                    margin-right: 10px;
                 }
             </style>
 

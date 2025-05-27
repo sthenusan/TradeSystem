@@ -26,25 +26,37 @@ router.get('/', (req, res) => {
 // Dashboard route
 router.get('/dashboard', ensureAuthenticated, async (req, res) => {
     try {
-        const recentActivity = await Activity.find({ user: req.user._id })
-            .sort({ createdAt: -1 })
-            .limit(5)
-            .populate('relatedTrade', 'status')
-            .populate('relatedItem', 'title');
-        
+       
 
-    res.render('dashboard', {
-        title: 'Dashboard',
+        const recentActivity = await Activity.find({
+            receiver: req.user._id
+        })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate('creator', 'firstName lastName')
+        .populate('receiver', 'firstName lastName')
+        .populate('relatedTrade', 'status')
+        .populate('relatedItem', 'title');
+
+
+
+        res.render('dashboard', {
+            title: 'Dashboard',
             user: req.user,
             recentActivity: recentActivity
         });
     } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
         res.render('dashboard', {
             title: 'Dashboard',
             user: req.user,
             recentActivity: []
-    });
+        });
     }
 });
 
