@@ -5,314 +5,228 @@ const Item = require('../../../models/Item');
 const tradeService = require('../../../services/tradeService');
 
 describe('Trade Service Test', () => {
+    let initiator, receiver, offeredItem, requestedItem;
+
     beforeAll(async () => {
-        // Connect to test database only if not already connected
-        if (mongoose.connection.readyState === 0) {
-            await mongoose.connect(process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/trade_test');
-        }
-    });
+        // Disconnect any existing connections
+        await mongoose.disconnect();
+        
+        // Connect to test database
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/trade_system_test', {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+    }, 10000);
 
     afterAll(async () => {
-        // Clean up test data
-        await User.deleteMany({});
-        await Item.deleteMany({});
-        await Trade.deleteMany({});
-        // Close connection only if we opened it
-        if (mongoose.connection.readyState !== 0) {
-            await mongoose.connection.close();
-        }
-    });
+        await mongoose.connection.dropDatabase();
+        await mongoose.disconnect();
+    }, 10000);
 
     beforeEach(async () => {
-        // Clear all collections before each test
+        // Clean up all collections
         await User.deleteMany({});
         await Item.deleteMany({});
         await Trade.deleteMany({});
-    });
 
-    it('should create a new trade', async () => {
         // Create test users
-        const initiator = await User.create({
+        initiator = await User.create({
             firstName: 'Test',
-            lastName: 'User',
-            email: 'test@example.com',
-            password: 'Test123!@#'
+            lastName: 'Initiator',
+            email: 'initiator@test.com',
+            password: 'password123'
         });
 
-        const receiver = await User.create({
-            firstName: 'Other',
-            lastName: 'User',
-            email: 'other@example.com',
-            password: 'Test123!@#'
+        receiver = await User.create({
+            firstName: 'Test',
+            lastName: 'Receiver',
+            email: 'receiver@test.com',
+            password: 'password123'
         });
 
         // Create test items
-        const offeredItem = await Item.create({
-            title: 'Test Item',
+        offeredItem = await Item.create({
+            title: 'Offered Item',
             description: 'Test Description',
             owner: initiator._id,
-            category: 'Electronics',
-            condition: 'New',
             status: 'Available',
-            location: 'Test Location'
+            location: 'Test Location',
+            condition: 'Like New',
+            category: 'Electronics',
+            value: 100
         });
 
-        const requestedItem = await Item.create({
-            title: 'Other Item',
-            description: 'Other Description',
+        requestedItem = await Item.create({
+            title: 'Requested Item',
+            description: 'Test Description',
             owner: receiver._id,
-            category: 'Electronics',
-            condition: 'New',
             status: 'Available',
-            location: 'Test Location'
+            location: 'Test Location',
+            condition: 'Like New',
+            category: 'Electronics',
+            value: 100
         });
-
-        const tradeData = {
-            initiator: initiator._id,
-            receiverId: receiver._id,
-            offeredItems: [offeredItem._id],
-            requestedItems: [requestedItem._id],
-            message: 'Initial trade proposal'
-        };
-
-        const trade = await tradeService.createTradeService(tradeData);
-        expect(trade).toHaveProperty('_id');
-        expect(trade.initiator.toString()).toBe(initiator._id.toString());
-        expect(trade.receiver.toString()).toBe(receiver._id.toString());
-        expect(trade.messages).toHaveLength(1);
-        expect(trade.messages[0].content).toBe('Initial trade proposal');
-
-        // Verify items status was updated
-        const updatedOfferedItem = await Item.findById(offeredItem._id);
-        const updatedRequestedItem = await Item.findById(requestedItem._id);
-        expect(updatedOfferedItem.status).toBe('Pending');
-        expect(updatedRequestedItem.status).toBe('Pending');
     });
 
-    it('should get trade by id', async () => {
-        // Create test users
-        const initiator = await User.create({
-            firstName: 'Test',
-            lastName: 'User',
-            email: 'test@example.com',
-            password: 'Test123!@#'
+    describe('createTradeService', () => {
+        it('should create a new trade successfully', async () => {
+            const tradeData = {
+                initiator: initiator._id,
+                receiver: receiver._id,
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id],
+                message: 'Test trade proposal'
+            };
+
+            const trade = await tradeService.createTradeService(tradeData);
+            expect(trade).toBeDefined();
+            expect(trade.initiator.toString()).toBe(initiator._id.toString());
+            expect(trade.receiver.toString()).toBe(receiver._id.toString());
+            expect(trade.status).toBe('Pending');
+            expect(trade.messages).toHaveLength(1);
+            expect(trade.messages[0].content).toBe('Test trade proposal');
         });
 
-        const receiver = await User.create({
-            firstName: 'Other',
-            lastName: 'User',
-            email: 'other@example.com',
-            password: 'Test123!@#'
+        it('should throw error for invalid receiver', async () => {
+            const tradeData = {
+                initiator: initiator._id,
+                receiver: new mongoose.Types.ObjectId(),
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id],
+                message: 'Test trade proposal'
+            };
+
+            await expect(tradeService.createTradeService(tradeData))
+                .rejects.toThrow('Invalid receiver');
         });
 
-        // Create test items
-        const offeredItem = await Item.create({
-            title: 'Test Item',
-            description: 'Test Description',
-            owner: initiator._id,
-            category: 'Electronics',
-            condition: 'New',
-            status: 'Available',
-            location: 'Test Location'
-        });
+        it('should throw error for unavailable items', async () => {
+            // Make item unavailable
+            await Item.findByIdAndUpdate(offeredItem._id, { status: 'Traded' });
 
-        const requestedItem = await Item.create({
-            title: 'Other Item',
-            description: 'Other Description',
-            owner: receiver._id,
-            category: 'Electronics',
-            condition: 'New',
-            status: 'Available',
-            location: 'Test Location'
-        });
+            const tradeData = {
+                initiator: initiator._id,
+                receiver: receiver._id,
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id],
+                message: 'Test trade proposal'
+            };
 
-        const trade = await Trade.create({
-            initiator: initiator._id,
-            receiver: receiver._id,
-            offeredItems: [offeredItem._id],
-            requestedItems: [requestedItem._id],
-            messages: [{ sender: initiator._id, content: 'Initial message' }]
+            await expect(tradeService.createTradeService(tradeData))
+                .rejects.toThrow('Items are not available for trade');
         });
-
-        const foundTrade = await tradeService.getTradeService(trade._id);
-        expect(foundTrade).toBeDefined();
-        expect(foundTrade._id.toString()).toBe(trade._id.toString());
-        expect(foundTrade.initiator.firstName).toBe('Test');
-        expect(foundTrade.receiver.firstName).toBe('Other');
     });
 
-    it('should update trade status', async () => {
-        // Create test users
-        const initiator = await User.create({
-            firstName: 'Test',
-            lastName: 'User',
-            email: 'test@example.com',
-            password: 'Test123!@#'
+    describe('getTradeService', () => {
+        it('should get trade by id', async () => {
+            const trade = await Trade.create({
+                initiator: initiator._id,
+                receiver: receiver._id,
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id],
+                messages: [{
+                    sender: initiator._id,
+                    content: 'Test message'
+                }]
+            });
+
+            const foundTrade = await tradeService.getTradeService(trade._id);
+            expect(foundTrade).toBeDefined();
+            expect(foundTrade._id.toString()).toBe(trade._id.toString());
+            expect(foundTrade.initiator.firstName).toBe('Test');
+            expect(foundTrade.receiver.firstName).toBe('Test');
         });
 
-        const receiver = await User.create({
-            firstName: 'Other',
-            lastName: 'User',
-            email: 'other@example.com',
-            password: 'Test123!@#'
+        it('should throw error for non-existent trade', async () => {
+            await expect(tradeService.getTradeService(new mongoose.Types.ObjectId()))
+                .rejects.toThrow('Trade not found');
         });
-
-        // Create test items
-        const offeredItem = await Item.create({
-            title: 'Test Item',
-            description: 'Test Description',
-            owner: initiator._id,
-            category: 'Electronics',
-            condition: 'New',
-            status: 'Available',
-            location: 'Test Location'
-        });
-
-        const requestedItem = await Item.create({
-            title: 'Other Item',
-            description: 'Other Description',
-            owner: receiver._id,
-            category: 'Electronics',
-            condition: 'New',
-            status: 'Available',
-            location: 'Test Location'
-        });
-
-        const trade = await Trade.create({
-            initiator: initiator._id,
-            receiver: receiver._id,
-            offeredItems: [offeredItem._id],
-            requestedItems: [requestedItem._id],
-            messages: [{ sender: initiator._id, content: 'Initial message' }]
-        });
-
-        const updatedTrade = await tradeService.updateTradeStatusService(trade._id, receiver._id, 'Accepted');
-        expect(updatedTrade.status).toBe('Accepted');
-
-        // Verify items status was updated
-        const updatedOfferedItem = await Item.findById(offeredItem._id);
-        const updatedRequestedItem = await Item.findById(requestedItem._id);
-        expect(updatedOfferedItem.status).toBe('Traded');
-        expect(updatedRequestedItem.status).toBe('Traded');
     });
 
-    it('should add message to trade', async () => {
-        // Create test users
-        const initiator = await User.create({
-            firstName: 'Test',
-            lastName: 'User',
-            email: 'test@example.com',
-            password: 'Test123!@#'
+    describe('updateTradeStatusService', () => {
+        it('should update trade status and item statuses', async () => {
+            const trade = await Trade.create({
+                initiator: initiator._id,
+                receiver: receiver._id,
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id],
+                messages: [{
+                    sender: initiator._id,
+                    content: 'Test message'
+                }]
+            });
+
+            const updatedTrade = await tradeService.updateTradeStatusService(
+                trade._id,
+                receiver._id,
+                'Completed'
+            );
+
+            expect(updatedTrade.status).toBe('Completed');
+
+            // Verify items were updated
+            const updatedOfferedItem = await Item.findById(offeredItem._id);
+            const updatedRequestedItem = await Item.findById(requestedItem._id);
+            expect(updatedOfferedItem.status).toBe('Traded');
+            expect(updatedRequestedItem.status).toBe('Traded');
         });
 
-        const receiver = await User.create({
-            firstName: 'Other',
-            lastName: 'User',
-            email: 'other@example.com',
-            password: 'Test123!@#'
-        });
+        it('should throw error for unauthorized status update', async () => {
+            const trade = await Trade.create({
+                initiator: initiator._id,
+                receiver: receiver._id,
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id]
+            });
 
-        // Create test items
-        const offeredItem = await Item.create({
-            title: 'Test Item',
-            description: 'Test Description',
-            owner: initiator._id,
-            category: 'Electronics',
-            condition: 'New',
-            status: 'Available',
-            location: 'Test Location'
+            await expect(tradeService.updateTradeStatusService(
+                trade._id,
+                initiator._id,
+                'Completed'
+            )).rejects.toThrow('Unauthorized to update trade status');
         });
-
-        const requestedItem = await Item.create({
-            title: 'Other Item',
-            description: 'Other Description',
-            owner: receiver._id,
-            category: 'Electronics',
-            condition: 'New',
-            status: 'Available',
-            location: 'Test Location'
-        });
-
-        const trade = await Trade.create({
-            initiator: initiator._id,
-            receiver: receiver._id,
-            offeredItems: [offeredItem._id],
-            requestedItems: [requestedItem._id],
-            messages: [{ sender: initiator._id, content: 'Initial message' }]
-        });
-
-        const updatedTrade = await tradeService.addMessageService(trade._id, receiver._id, 'New message');
-        expect(updatedTrade.messages).toHaveLength(2);
-        expect(updatedTrade.messages[1].content).toBe('New message');
-        expect(updatedTrade.messages[1].sender.toString()).toBe(receiver._id.toString());
     });
 
-    it('should throw error for invalid receiver', async () => {
-        // Create test user
-        const initiator = await User.create({
-            firstName: 'Test',
-            lastName: 'User',
-            email: 'test@example.com',
-            password: 'Test123!@#'
+    describe('addMessageService', () => {
+        it('should add message to trade', async () => {
+            const trade = await Trade.create({
+                initiator: initiator._id,
+                receiver: receiver._id,
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id]
+            });
+
+            const updatedTrade = await tradeService.addMessageService(
+                trade._id,
+                receiver._id,
+                'New message'
+            );
+
+            expect(updatedTrade.messages).toHaveLength(1);
+            expect(updatedTrade.messages[0].content).toBe('New message');
+            expect(updatedTrade.messages[0].sender.toString()).toBe(receiver._id.toString());
         });
 
-        // Create test items
-        const offeredItem = await Item.create({
-            title: 'Test Item',
-            description: 'Test Description',
-            owner: initiator._id,
-            category: 'Electronics',
-            condition: 'New',
-            status: 'Available',
-            location: 'Test Location'
+        it('should throw error for unauthorized message', async () => {
+            const trade = await Trade.create({
+                initiator: initiator._id,
+                receiver: receiver._id,
+                offeredItems: [offeredItem._id],
+                requestedItems: [requestedItem._id]
+            });
+
+            const unauthorizedUser = await User.create({
+                firstName: 'Unauthorized',
+                lastName: 'User',
+                email: 'unauthorized@test.com',
+                password: 'password123'
+            });
+
+            await expect(tradeService.addMessageService(
+                trade._id,
+                unauthorizedUser._id,
+                'New message'
+            )).rejects.toThrow('Unauthorized to add message');
         });
-
-        const tradeData = {
-            initiator: initiator._id,
-            receiverId: new mongoose.Types.ObjectId(), // Non-existent user
-            offeredItems: [offeredItem._id],
-            requestedItems: [],
-            message: 'Initial trade proposal'
-        };
-
-        await expect(tradeService.createTradeService(tradeData)).rejects.toThrow('Invalid receiver');
-    });
-
-    it('should throw error for unavailable items', async () => {
-        // Create test users
-        const initiator = await User.create({
-            firstName: 'Test',
-            lastName: 'User',
-            email: 'test@example.com',
-            password: 'Test123!@#'
-        });
-
-        const receiver = await User.create({
-            firstName: 'Other',
-            lastName: 'User',
-            email: 'other@example.com',
-            password: 'Test123!@#'
-        });
-
-        // Create test items
-        const offeredItem = await Item.create({
-            title: 'Test Item',
-            description: 'Test Description',
-            owner: initiator._id,
-            category: 'Electronics',
-            condition: 'New',
-            status: 'Traded', // Item not available
-            location: 'Test Location'
-        });
-
-        const tradeData = {
-            initiator: initiator._id,
-            receiverId: receiver._id,
-            offeredItems: [offeredItem._id],
-            requestedItems: [],
-            message: 'Initial trade proposal'
-        };
-
-        await expect(tradeService.createTradeService(tradeData)).rejects.toThrow('Items are not available for trade');
     });
 }); 
