@@ -92,7 +92,7 @@ async function createTradeActivity(trade, type, actionUser) {
         });
         activities.push(receiverActivity);
 
-        console.log('Created activities:', activities.map(a => a._id));
+        
     } catch (error) {
         console.error('Error creating trade activity:', error);
         console.error('Error details:', {
