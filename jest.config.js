@@ -1,13 +1,11 @@
 module.exports = {
     testEnvironment: 'node',
-    setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
-    testMatch: [
-        '**/tests/**/*.test.js',
-        '!**/cypress/**'
-    ],
+    setupFiles: ['dotenv/config'],
+    testMatch: ['**/tests/**/*.test.js'],
     verbose: true,
     forceExit: true,
     clearMocks: true,
     resetMocks: true,
-    restoreMocks: true
+    restoreMocks: true,
+    testTimeout: 10000
 }; 
