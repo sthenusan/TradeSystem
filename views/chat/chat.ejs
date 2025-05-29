@@ -20,15 +20,14 @@
       </div>
     </div>
 
-    <form id="messageForm" action="/trades/<%= trade._id %>/messages" method="POST">
+    <form action="/trades/chat/<%= trade._id %>" method="POST">
       <div class="input-field">
-        <textarea id="messageInput" name="content" class="materialize-textarea" required></textarea>
-        <label for="messageInput">Type your message</label>
+        <textarea name="content" class="materialize-textarea" required></textarea>
+        <label for="content">Type your message</label>
       </div>
-      <button class="btn waves-effect" type="submit">Send</button>
+      <button class="btn waves-effect">Send</button>
     </form>
   </div>
-
   <script src="/js/chat.js"></script>
 </body>
 </html>
