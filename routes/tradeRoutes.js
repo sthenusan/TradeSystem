@@ -5,12 +5,62 @@ const tradeController = require('../controllers/tradeController');
 const Trade = require('../models/Trade');
 const Message = require('../models/Message');
 const User = require('../models/User');
+const Item = require('../models/Item'); // Needed in create route
 
-// Get all trades for current user
+// ✅ NEW ROUTE: Chat Inbox (MUST COME BEFORE `/:id`)
+router.get('/chat', ensureAuthenticated, async (req, res) => {
+    try {
+        const trades = await Trade.find({
+            $or: [{ initiator: req.user._id }, { receiver: req.user._id }]
+        }).populate('initiator receiver', 'firstName');
+
+        res.render('chat/inbox', {
+            title: 'My Messages',
+            trades,
+            user: req.user
+        });
+    } catch (err) {
+        console.error('Inbox route error:', err);
+        res.status(500).render('error', { message: 'Failed to load inbox' });
+    }
+});
+
+// ✅ NEW ROUTE: Chat for a specific trade
+router.get('/chat/:tradeId', ensureAuthenticated, async (req, res) => {
+    try {
+        const trade = await Trade.findById(req.params.tradeId)
+            .populate('initiator receiver')
+            .populate({
+                path: 'messages',
+                populate: { path: 'sender', select: 'firstName' }
+            });
+
+        if (!trade) {
+            return res.status(404).render('error', { message: 'Trade not found' });
+        }
+
+        const recipient = trade.initiator._id.equals(req.user._id)
+            ? trade.receiver
+            : trade.initiator;
+
+        res.render('chat/chat', {
+            title: 'Chat Room',
+            user: req.user,
+            trade,
+            recipient,
+            messages: trade.messages
+        });
+    } catch (err) {
+        console.error('Chat thread error:', err);
+        res.status(500).render('error', { message: 'Failed to load chat' });
+    }
+});
+
+// 🔹 GET: All trades for current user
 router.get('/', ensureAuthenticated, async (req, res) => {
     try {
         const trades = await Trade.find({
-            $or: [{ initiator: req.user.id }, { receiver: req.user.id }]
+            $or: [{ initiator: req.user._id }, { receiver: req.user._id }]
         })
             .populate('initiator receiver', 'name rating')
             .populate('offeredItems requestedItems')
@@ -26,10 +76,7 @@ router.get('/', ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Get single trade
-router.get('/:id', ensureAuthenticated, tradeController.getTrade);
-
-// Create trade form
+// 🔹 GET: Create Trade Form
 router.get('/create/:itemId', ensureAuthenticated, async (req, res) => {
     try {
         const item = await Item.findById(req.params.itemId)
@@ -39,9 +86,8 @@ router.get('/create/:itemId', ensureAuthenticated, async (req, res) => {
             return res.status(404).render('error', { message: 'Item not found' });
         }
 
-        // Get user's available items for trade
         const userItems = await Item.find({
-            owner: req.user.id,
+            owner: req.user._id,
             status: 'Available'
         });
 
@@ -56,42 +102,16 @@ router.get('/create/:itemId', ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Create trade
+// 🔹 POST: Create Trade
 router.post('/', ensureAuthenticated, tradeController.createTrade);
 
-// Update trade status
+// 🔹 PUT: Update Trade Status
 router.put('/:id/status', ensureAuthenticated, tradeController.updateTradeStatus);
 
-// Add message to trade
+// 🔹 POST: Add Message
 router.post('/:id/messages', ensureAuthenticated, tradeController.addMessage);
 
-// 🔓 Bypassed Chat Route (TEMP FOR DEV)
-router.get('/chat/:tradeId', async (req, res) => {
-    try {
-        // Hardcoded logged-in user for testing: Demo Trader
-        req.user = await User.findById('682c347004ec912f406c4bd0'); // Replace with actual user ID
-
-        const trade = await Trade.findById(req.params.tradeId).populate('initiator receiver');
-        if (!trade) {
-            return res.status(404).render('error', { message: 'Trade not found' });
-        }
-
-        const recipient = trade.initiator._id.toString() === req.user._id.toString()
-            ? trade.receiver
-            : trade.initiator;
-
-        const messages = await Message.find({ trade: trade._id }).sort({ createdAt: 1 });
-
-        res.render('chat/chat', {
-            user: req.user,
-            trade,
-            recipient,
-            messages
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).render('error', { message: 'Server error' });
-    }
-});
+// 🔹 GET: Trade Details (MUST BE LAST!)
+router.get('/:id', ensureAuthenticated, tradeController.getTrade);
 
 module.exports = router;
